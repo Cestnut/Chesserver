@@ -1,5 +1,5 @@
 #include "server_connection.h"
-
+#include "game_handling.h"
 
 int main(int argc, char **argv){
 
@@ -14,7 +14,8 @@ int main(int argc, char **argv){
     memset(input_buffer, 0, BUFFER_LEN);
 
     server_fd = create_server_socket(port);
-    
+    init_games();
+
     pthread_t tid;
     worker_args *worker_args;
     client_addr_len = sizeof(client_addr);  

@@ -8,7 +8,7 @@ Il server si appoggia a un database SQLite
 
 # Client
 Il client si connette al server e gli viene presentato un menù:
-- Creare una partita
+- Creare una partita (massimo 32 caratteri)
 - Connettersi a una stanza
 - Disconnettersi
 
@@ -89,3 +89,18 @@ typedef struct match_data{
     unsigned short int num_players; //usato per scorrere la lista dei giocatori
     unsigned int max_spectators;
 } match_data;
+
+typedef struct game{
+    char name[GAME_NAME_MAX_LENGHT];
+    pthread_t tid;
+    match_data *match_data;
+    UT_hash_handle hh;
+} game;
+
+typedef struct games_struct{
+    game *hashmap;
+    pthread_rwlock_t rwlock;
+} games_struct;
+
+Per l'hashmap è stata usata la seguente implementazione: https://troydhanson.github.io/uthash.
+

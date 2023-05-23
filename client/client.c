@@ -2,16 +2,20 @@
 #include <string.h>
 #include "../common/common.h"
 
+error create_game(int client_fd);
+error join_game(int client_fd);
+error spectate_game(int client_fd);
+
 int main(int argc, char **argv){
 
-    int socket_fd;
+    int client_fd;
     char server_addr[32], *hostname; 
     int port, error_flag;
 
     char output_buffer[BUFFER_LEN], input_buffer[BUFFER_LEN];
     do{
         error_flag = 0;
-        printf("Benvenuto a Chesserver! Scrivi l'indirizzo del server nella forma <HOSTNAME>:<PORTA>\n");
+        puts("Benvenuto a Chesserver! Scrivi l'indirizzo del server nella forma <HOSTNAME>:<PORTA>\n");
         fgets(server_addr, sizeof(server_addr), stdin);
         char *token;
         token = strtok(server_addr, ":");
@@ -19,7 +23,7 @@ int main(int argc, char **argv){
         
         token = strtok(NULL, "");
         if(token == NULL){
-            printf("Anche la porta deve essere fornita\n");
+            puts("Anche la porta deve essere fornita\n");
             error_flag = 1;
         }
         else{
@@ -27,83 +31,111 @@ int main(int argc, char **argv){
         }
     }while(error_flag);
     
-
     memset(output_buffer, 0, BUFFER_LEN);
-    socket_fd = connect_to_server(hostname, port);
+    client_fd = connect_to_server(hostname, port);
     
-    char input;
+    char input[10];
     client_choice choice;
     char command_prompt[] = "Insert a command:\n"
                             "> 1: Create game\n"
                             "> 2: Join game\n"
                             "> 3: Spectate game\n"
                             "> 4: Exit\n";
+    error error_code;
     while(1){
         //Manda input\n
         printf("%s\n", command_prompt);    
-        input = (char)fgetc(stdin);
-        send(socket_fd, &input, 1, 0);
-        choice = atoi(&input);
+        fgets(input, sizeof(input), stdin);
+        flush_stdin();
+        choice = (client_choice)atoi(input);
+        send(client_fd, &choice, 1, 0);
         switch(choice){
             case CREATE_GAME:
-                printf("GAME CREATED\n");
+                error_code = create_game(client_fd);
                 break;
                     
             case JOIN_GAME:
-                printf("GAME JOINED\n");
+                error_code = join_game(client_fd);
                 break;
 
             case SPECTATE_GAME:
-                printf("SPECTATING GAME\n");
+                error_code = spectate_game(client_fd);
                 break;
 
             case EXIT:
-                printf("GAME EXITED\n");        
+                puts("GAME EXITED\n");        
                 exit(0);
                 break;
-            }        
-        flush_stdin();
+            }
+
+        switch(error_code){
+                case NO_ERROR:
+                    break;
+                case GAME_NAME_TAKEN:
+                    puts("A game with that name already exists");
+                case GAME_DOESNT_EXIST:
+                    puts("There isn't a game with such name");
+                case GAME_FULL:
+                    puts("This game is full");
+            }
     }
 
     fgets(output_buffer, sizeof(output_buffer), stdin);
     output_buffer[strlen(output_buffer) - 1] = '\0';
     printf("%lu\n", strlen(output_buffer));
-    if(send(socket_fd, output_buffer, strlen(output_buffer), 0) == -1){
+    if(send(client_fd, output_buffer, strlen(output_buffer), 0) == -1){
         printf("Error sending message: errno %d\n", errno);
         exit(0);
     }
-    printf("Message sent\n");
+    puts("Message sent\n");
 
-    if(recv(socket_fd, input_buffer, sizeof(input_buffer), 0) == -1){
+    if(recv(client_fd, input_buffer, sizeof(input_buffer), 0) == -1){
         printf("Error receiving message: errno %d\n", errno);
         exit(0);
     }
-    printf("Message received\n");
+    puts("Message received\n");
 
     printf("client message: %s\n", output_buffer);
     printf("server message: %s\n", input_buffer);
 
-    close(socket_fd);
+    close(client_fd);
 
 
     return 0;
 }
 
-/*
-1: create socket
-2: set port and IP
-3: bind to the set port and ip
-4: listen for clients
-5: accept incoming connection
-6: Receive client's message and send response
-7: close socket
+error create_game(int client_fd){
+    char input_buffer[64];
+    error error_code;
+    puts("Insert game name, timer lenght and max spectators number in the form: <GAME_NAME>:<TIMER>:<MAX_SPECTATORS>");
+    fgets(input_buffer, sizeof(input_buffer), stdin);
+    flush_stdin();
+    send(client_fd, input_buffer, strlen(input_buffer), 0);
 
+    recv(client_fd, &error_code, sizeof(client_choice), 0);
+    return error_code;
+}
+error join_game(int client_fd){
+    char input_buffer[GAME_NAME_MAX_LENGHT];
+    error error_code;
+    puts("Insert game name: ");
+    fgets(input_buffer, sizeof(input_buffer), stdin);
+    flush_stdin();
+    send(client_fd, input_buffer, strlen(input_buffer), 0);
 
-sockaddr_in.sin_family
-sockaddr_in.sin_port
-sockaddr_in.sin_addr.s_addr
-listen
-accept
-recv
-send
-*/
+    recv(client_fd, &error_code, sizeof(client_choice), 0);
+    return error_code;
+}
+
+//This function is the same as join_game. It exists because it may behave differently in the future.
+error spectate_game(int client_fd){
+    char input_buffer[GAME_NAME_MAX_LENGHT];
+    error error_code;
+    puts("Insert game name: ");
+    fgets(input_buffer, sizeof(input_buffer), stdin);
+    flush_stdin();
+    send(client_fd, input_buffer, strlen(input_buffer), 0);
+
+    recv(client_fd, &error_code, sizeof(client_choice), 0);
+    return error_code;
+}
