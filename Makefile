@@ -12,5 +12,5 @@ server: server/server.c
 
 
 clean: client server
-	rm client
-	rm server
+	rm client.out
+	rm server.out
