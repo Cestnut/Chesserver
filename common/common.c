@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <ctype.h>
+
 void flush_stdin(){
     int c;
     while ((c = getchar()) != '\n' && c != EOF) {

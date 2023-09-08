@@ -4,15 +4,15 @@
 
 error create_game(int client_fd);
 error join_game(int client_fd);
-error spectate_game(int client_fd);
 
 int main(int argc, char **argv){
 
     int client_fd;
     char server_addr[32], *hostname; 
     int port, error_flag;
-
     char output_buffer[BUFFER_LEN], input_buffer[BUFFER_LEN];
+    
+    //Parses hostname and port number from user input
     do{
         error_flag = 0;
         puts("Benvenuto a Chesserver! Scrivi l'indirizzo del server nella forma <HOSTNAME>:<PORTA>\n");
@@ -31,7 +31,10 @@ int main(int argc, char **argv){
         }
     }while(error_flag);
     
+    //Sets to 0 output buffer
     memset(output_buffer, 0, BUFFER_LEN);
+
+    //Connects to game server
     client_fd = connect_to_server(hostname, port);
     
     char input[10];
@@ -39,8 +42,7 @@ int main(int argc, char **argv){
     char command_prompt[] = "Insert a command:\n"
                             "> 1: Create game\n"
                             "> 2: Join game\n"
-                            "> 3: Spectate game\n"
-                            "> 4: Exit\n";
+                            "> 3: Exit\n";
     error error_code;
     while(1){
         //Manda input\n
@@ -56,10 +58,6 @@ int main(int argc, char **argv){
                     
             case JOIN_GAME:
                 error_code = join_game(client_fd);
-                break;
-
-            case SPECTATE_GAME:
-                error_code = spectate_game(client_fd);
                 break;
 
             case EXIT:
@@ -116,19 +114,6 @@ error create_game(int client_fd){
     return error_code;
 }
 error join_game(int client_fd){
-    char input_buffer[GAME_NAME_MAX_LENGHT];
-    error error_code;
-    puts("Insert game name: ");
-    fgets(input_buffer, sizeof(input_buffer), stdin);
-    flush_stdin();
-    send(client_fd, input_buffer, strlen(input_buffer), 0);
-
-    recv(client_fd, &error_code, sizeof(client_choice), 0);
-    return error_code;
-}
-
-//This function is the same as join_game. It exists because it may behave differently in the future.
-error spectate_game(int client_fd){
     char input_buffer[GAME_NAME_MAX_LENGHT];
     error error_code;
     puts("Insert game name: ");

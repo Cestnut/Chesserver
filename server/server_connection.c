@@ -77,11 +77,6 @@ void *client_worker(void *args){
                     error_code = join_game(client_fd, game_name);
                     break;
 
-                case SPECTATE_GAME:
-                    printf("SPECTATING GAME\n");
-                    error_code = spectate_game(client_fd, game_name);
-                    break;
-
                 case EXIT:
                     printf("GAME EXITED\n");        
                     pthread_exit(0);
@@ -112,9 +107,5 @@ error create_game(int client_fd, char *game_name, unsigned int timer_lenght){
 }
 
 error join_game(int client_fd, char *game_name){
-
-}
-
-error spectate_game(int client_fd, char *game_name){
 
 }
