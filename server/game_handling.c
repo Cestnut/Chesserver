@@ -6,7 +6,7 @@ void init_games(){
     pthread_rwlock_init(games->rwlock, NULL);
 }
 
-error insert_game(char *name, unsigned int timer_lenght, unsigned int max_spectators){
+error insert_game(char *name, unsigned int timer_lenght){
     error error_code;
     pthread_rwlock_wrlock(games->rwlock);
     if(get_game(name) == NULL){
@@ -17,7 +17,6 @@ error insert_game(char *name, unsigned int timer_lenght, unsigned int max_specta
         game* game_entry = malloc(sizeof(game_entry));
         strcpy(game_entry->name, name);
         game_entry->match_data->timer_lenght = timer_lenght;
-        game_entry->match_data->max_spectators = max_spectators;
         pthread_rwlock_init(game_entry->rwlock, NULL);
         
         pthread_t tid;

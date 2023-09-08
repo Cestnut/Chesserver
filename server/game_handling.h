@@ -9,16 +9,11 @@ typedef struct player{
     struct player *next_player;
 } player;
 
-typedef struct spectator{
-    int socket_fd;
-} spectator;
 
 typedef struct match_data{
     player *players;
-    spectator *spectators;
     unsigned int timer_lenght;
     unsigned short int num_players; //usato per scorrere la lista dei giocatori
-    unsigned int max_spectators;
 } match_data;
 
 typedef struct game{
@@ -37,7 +32,7 @@ typedef struct games_struct{
 games_struct *games;
 
 void init_games();
-error insert_game(char *name, unsigned int timer_lenght, unsigned int max_spectators);
+error insert_game(char *name, unsigned int timer_lenght);
 game *get_game(char *name);
 void delete_game(char *name);
 

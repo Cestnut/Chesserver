@@ -107,7 +107,7 @@ int main(int argc, char **argv){
 error create_game(int client_fd){
     char input_buffer[64];
     error error_code;
-    puts("Insert game name, timer lenght and max spectators number in the form: <GAME_NAME>:<TIMER>:<MAX_SPECTATORS>");
+    puts("Insert game name, timer lenght in the form: <GAME_NAME>:<TIMER>");
     fgets(input_buffer, sizeof(input_buffer), stdin);
     flush_stdin();
     send(client_fd, input_buffer, strlen(input_buffer), 0);

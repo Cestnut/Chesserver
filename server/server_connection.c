@@ -43,7 +43,7 @@ void *client_worker(void *args){
     
     char input_buffer[64];
     char game_name[GAME_NAME_MAX_LENGHT]; 
-    unsigned int timer_lenght, max_spectators;
+    unsigned int timer_lenght;
     client_choice choice;
     ssize_t bytes_read;
     error error_code = 0;
@@ -68,17 +68,8 @@ void *client_worker(void *args){
                     else{
                         timer_lenght = strtoul(token,0,0);
                     }
-                    
-                    token = strtok(NULL, "");
-                    if(token == NULL || !(is_number(token))){
-                        error_code = INVALID_INPUT;
-                        break;
-                    }
-                    else{
-                        max_spectators = strtoul(token,0,0);
-                    } 
 
-                    error_code = create_game(client_fd, game_name, timer_lenght, max_spectators);
+                    error_code = create_game(client_fd, game_name, timer_lenght);
                     break;
                     
                 case JOIN_GAME:
@@ -107,10 +98,10 @@ void *client_worker(void *args){
     return NULL;
 }
 
-error create_game(int client_fd, char *game_name, unsigned int timer_lenght, unsigned int max_spectators){
+error create_game(int client_fd, char *game_name, unsigned int timer_lenght){
     error error_code;
     
-    error_code = insert_game(game_name, timer_lenght, max_spectators);
+    error_code = insert_game(game_name, timer_lenght);
 
     if(error_code){
         return error_code;
