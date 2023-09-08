@@ -4,7 +4,7 @@ Chess client and server to play with other players over a network
 # Architettura
 # Server
 Server centrale a cui gli utenti si connettono per giocare tra di loro.
-Il server si appoggia a un database SQLite
+Il server si appoggia a un database SQLite se c'è bisogno (non dovrebbe essercene)
 
 # Client
 Il client si connette al server e gli viene presentato un menù:
@@ -16,7 +16,6 @@ Il client si connette al server e gli viene presentato un menù:
 # Funzioni
 ## Stanza
 Una partita viene creata con un nome univoco. Se un utente si unisce alla partita, il gioco inizia.
-Tutti gli utenti che si connettono dopo faranno da spettatori.
 
 A fine partita gli utenti vengono disconnessi
 
@@ -33,7 +32,6 @@ La server socket principale accetta le connessioni e fa partire un thread col me
 Alla creazione della partita viene creato un thread (con parametro la connessione), che sta fermo.
 
 All'unione alla partita, viene inviato un messaggio al thread e comincia l'esecuzione.
-Unioni successive sono considerati come spettatori e non influiscono sull'esecuzione.
 
 
 ## Client
@@ -60,7 +58,7 @@ R N B Q K B N R
 
 Input:
 formato algebrico e.g.: e6, Nc3
-
+oppure scelta casella e destinazione se non riesco (esempio: a2 a4)
 
 # Tecnologie
 - multithreading
@@ -78,16 +76,11 @@ typedef struct player{
     struct player *next_player;
 } player;
 
-typedef struct spectator{
-    int socket_fd;
-} spectator;
 
 typedef struct match_data{
     player *players;
-    spectator *spectators;
     unsigned int timer_lenght;
     unsigned short int num_players; //usato per scorrere la lista dei giocatori
-    unsigned int max_spectators;
 } match_data;
 
 typedef struct game{
