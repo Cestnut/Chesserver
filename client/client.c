@@ -12,6 +12,9 @@ int main(int argc, char **argv){
     int port, error_flag;
     char output_buffer[BUFFER_LEN], input_buffer[BUFFER_LEN];
     
+    //Sets to 0 output buffer
+    memset(output_buffer, 0, BUFFER_LEN);
+
     //Parses hostname and port number from user input
     do{
         error_flag = 0;
@@ -31,8 +34,6 @@ int main(int argc, char **argv){
         }
     }while(error_flag);
     
-    //Sets to 0 output buffer
-    memset(output_buffer, 0, BUFFER_LEN);
 
     //Connects to game server
     client_fd = connect_to_server(hostname, port);
@@ -78,26 +79,7 @@ int main(int argc, char **argv){
             }
     }
 
-    fgets(output_buffer, sizeof(output_buffer), stdin);
-    output_buffer[strlen(output_buffer) - 1] = '\0';
-    printf("%lu\n", strlen(output_buffer));
-    if(send(client_fd, output_buffer, strlen(output_buffer), 0) == -1){
-        printf("Error sending message: errno %d\n", errno);
-        exit(0);
-    }
-    puts("Message sent\n");
-
-    if(recv(client_fd, input_buffer, sizeof(input_buffer), 0) == -1){
-        printf("Error receiving message: errno %d\n", errno);
-        exit(0);
-    }
-    puts("Message received\n");
-
-    printf("client message: %s\n", output_buffer);
-    printf("server message: %s\n", input_buffer);
-
     close(client_fd);
-
 
     return 0;
 }
