@@ -13,7 +13,6 @@ error insert_game(char *name, unsigned int timer_lenght){
         error_code = GAME_NAME_TAKEN;
     }
     else{
-        games->hashmap = NULL;
         game* game_entry = malloc(sizeof(game_entry));
         strcpy(game_entry->name, name);
         game_entry->match_data->timer_lenght = timer_lenght;
