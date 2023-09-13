@@ -97,3 +97,50 @@ typedef struct games_struct{
 
 Per l'hashmap è stata usata la seguente implementazione: https://troydhanson.github.io/uthash.
 
+## Funzionalità da aggiungere
+- Token del client:
+    - Creazione sul server e gestione quando un nuovo client si connette
+    - Salvataggio sul client
+
+- Timer per la partita
+
+- Tutta la parte degli scacchi:
+    - scacchiera
+    - pezzi
+    - ricezione e parsing mosse
+    - validazione mosse
+    - log delle mosse
+
+- Visualizzazione scacchiera sul client
+
+- Dump e ripristino della struttura games
+
+- Due sistemi di log sul server. Uno per gli eventi (creazione partita, rimozione, connessione giocatore) e l'altro per le partite (le mosse ecc ecc)
+
+## Modifiche da fare:
+### client.c
+    - linea 39, non fare chiudere il processo immediatamente, prova prima un paio di volte
+
+### game_handling.h
+    match_data non ha senso:
+    - players magari diventa current_player
+
+    game_handling dovrebbe inoltre riferirsi alla parte di gestione delle strutture dati
+
+### game_handling.c
+    insert_game():
+    - linea 22: nella creazione del thread andrebbe passata la struct game
+
+    run_game():
+    - Controlla i giocatori finché non ci sono entrambi (parte dalla testa e itera controllando che ci siano due elementi)
+    - sceglie casualmente uno dei giocatori per iniziare avvia il timer e comunica ai client che la partita è iniziata
+    - aspetta la mossa, usando il timer come timeout. Se va in timeout partita finita. Se arriva la mossa si aggiorna il timer, si valida la mossa e se è valida il timer si stoppa e si comunica con i client, prossimo giocatore.
+    - A termine partita eliminare il thread e l'entry del match, ricreare i worker per i client (notifica che la partita è finita)
+
+
+### server_connection
+    Dovrebbe separare le funzioni di utility da quelle del worker (per interagire col client direttamente)
+
+    join_game:
+    - dovrebbe semplicemente allocare al game un player
+
