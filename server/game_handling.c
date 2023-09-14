@@ -13,9 +13,14 @@ error insert_game(char *name, unsigned int timer_lenght){
         error_code = GAME_NAME_TAKEN;
     }
     else{
-        game* game_entry = malloc(sizeof(game_entry));
+        game* game_entry = malloc(sizeof(game));
         strcpy(game_entry->name, name);
-        game_entry->match_data->timer_lenght = timer_lenght;
+        match_data* data = malloc(sizeof(match_data));
+        data->players = NULL;
+        data->timer_lenght = timer_lenght;
+        data->num_players = 2;
+        game_entry->match_data = data;
+
         pthread_rwlock_init(&game_entry->rwlock, NULL);
         
         pthread_t tid;
@@ -43,6 +48,7 @@ void delete_game(char *name){
     pthread_rwlock_wrlock(&games->rwlock);
     game* game_entry = get_game(name);
     if(game_entry) {
+        free(game_entry->match_data);
         HASH_DEL(games->hashmap, game_entry);
         free(game_entry);
     }
