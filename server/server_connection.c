@@ -107,5 +107,23 @@ error create_game(int client_fd, char *game_name, unsigned int timer_length){
 }
 
 error join_game(int client_fd, char *game_name){
+    game *game = get_game(game_name);
+    player* new_player = malloc(sizeof(player));
+    new_player->socket_fd = client_fd;
+    new_player->timer = game->match_data->timer_length;
+    new_player->next_player = NULL;
+    game->match_data->connected_players++;
+
+    if(game->match_data->connected_players == 0){
+        game->match_data->players = new_player;
+        return NO_ERROR;
+    }
+    else if(game->match_data->max_players < game->match_data->connected_players){
+        game->match_data->players->next_player = new_player;
+        return NO_ERROR;
+    }
+    else{
+        return GAME_FULL;
+    }
 
 }

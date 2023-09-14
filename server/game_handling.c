@@ -18,7 +18,8 @@ error insert_game(char *name, unsigned int timer_length){
         match_data* data = malloc(sizeof(match_data));
         data->players = NULL;
         data->timer_length = timer_length;
-        data->num_players = 2;
+        data->max_players = 2;
+        data->connected_players = 0;
         game_entry->match_data = data;
 
         pthread_rwlock_init(&game_entry->rwlock, NULL);

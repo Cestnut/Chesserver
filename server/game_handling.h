@@ -14,7 +14,10 @@ typedef struct player{
 typedef struct match_data{
     player *players;
     unsigned int timer_length;
-    unsigned short int num_players; //usato per scorrere la lista dei giocatori
+
+    //usati per controllare se la lobby e piena e aggiungere nuovi giocatori
+    unsigned short int max_players;
+    unsigned short int connected_players;
 } match_data;
 
 typedef struct game{
