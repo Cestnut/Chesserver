@@ -33,8 +33,6 @@ typedef struct games_struct{
     pthread_rwlock_t rwlock;
 } games_struct;
 
-games_struct *games;
-
 void init_games();
 error insert_game(char *name, unsigned int timer_length);
 game *get_game(char *name);

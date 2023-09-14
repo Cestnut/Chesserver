@@ -1,7 +1,9 @@
 #include "game_handling.h"
-#include <pthread.h>
+
+games_struct *games;
 
 void init_games(){
+    games = malloc(sizeof(games_struct));
     games->hashmap = NULL;
     pthread_rwlock_init(&games->rwlock, NULL);
 }
@@ -18,7 +20,7 @@ error insert_game(char *name, unsigned int timer_length){
         match_data* data = malloc(sizeof(match_data));
         data->players = NULL;
         data->timer_length = timer_length;
-        data->max_players = 2;
+        data->max_players = MAX_PLAYERS;
         data->connected_players = 0;
         game_entry->match_data = data;
 
