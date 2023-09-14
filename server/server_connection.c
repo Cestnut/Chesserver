@@ -1,7 +1,7 @@
 #include "server_connection.h"
-#include "../common/common.h"
-#include "game_handling.h"
-#include <pthread.h>
+
+error join_game(int client_fd, char *game_name);
+error create_game(int client_fd, char *game_name, unsigned int timer_length);
 
 int create_server_socket(int port){
     int server_fd;
@@ -37,6 +37,21 @@ int create_server_socket(int port){
     return server_fd;
 }
 
+char *receive_token(int client_fd){
+    char *token = malloc((TOKEN_LENGTH+1) * sizeof(char));
+    recv(client_fd, token, (TOKEN_LENGTH+1), 0);
+    printf("%s\n", token);
+    printf("%d\n", strlen(token));
+    if(strlen(token)!=TOKEN_LENGTH){
+        free(token);
+        token = random_string(TOKEN_LENGTH);
+        printf("%d\n", strlen(token));
+        send(client_fd, token, (TOKEN_LENGTH+1), 0);
+    }
+    return token;
+
+}
+
 void *client_worker(void *args){
     worker_args *data = (worker_args*)args;
     int client_fd = data->client_fd;
@@ -48,6 +63,9 @@ void *client_worker(void *args){
     ssize_t bytes_read;
     error error_code = 0;
 
+    char *client_token = receive_token(client_fd);
+    printf("%s\n", client_token);
+
     while(1){
         bytes_read = recv(client_fd, &choice, sizeof(client_choice), 0);
         if(bytes_read){
@@ -56,17 +74,17 @@ void *client_worker(void *args){
                     printf("GAME CREATED\n");
                     recv(client_fd, &input_buffer, sizeof(game_name), 0);
 
-                    char *token;
-                    token = strtok(input_buffer, ":");
-                    strncpy(game_name, token, GAME_NAME_MAX_LENGTH);
+                    char *split_token;
+                    split_token = strtok(input_buffer, ":");
+                    strncpy(game_name, split_token, GAME_NAME_MAX_LENGTH);
                         
-                    token = strtok(NULL, "");
-                    if(token == NULL || !(is_number(token))){
+                    split_token = strtok(NULL, "");
+                    if(split_token == NULL || !(is_number(split_token))){
                         error_code = INVALID_INPUT;
                         break;
                     }
                     else{
-                        timer_length = strtoul(token,0,0);
+                        timer_length = strtoul(split_token,0,0);
                     }
 
                     error_code = create_game(client_fd, game_name, timer_length);
@@ -102,11 +120,12 @@ error create_game(int client_fd, char *game_name, unsigned int timer_length){
         return error_code;
     }
     else{
-        return join_game(game_name, client_fd);
+        return join_game(client_fd, game_name);
     }
 }
 
 error join_game(int client_fd, char *game_name){
+    error error_code;
     game *game = get_game(game_name);
     player* new_player = malloc(sizeof(player));
     new_player->socket_fd = client_fd;
@@ -116,14 +135,14 @@ error join_game(int client_fd, char *game_name){
 
     if(game->match_data->connected_players == 0){
         game->match_data->players = new_player;
-        return NO_ERROR;
+        error_code = NO_ERROR;
     }
     else if(game->match_data->max_players < game->match_data->connected_players){
         game->match_data->players->next_player = new_player;
-        return NO_ERROR;
+        error_code = NO_ERROR;
     }
     else{
-        return GAME_FULL;
+        error_code = GAME_FULL;
     }
-
+    return error_code;
 }

@@ -7,7 +7,8 @@
 #include <errno.h>
 #include <time.h>
 #include <poll.h>
-#include <pthread.h>
+#include "game_handling.h"
+
 
 #define PORT 5555
 #define BUFFER_LEN 1024

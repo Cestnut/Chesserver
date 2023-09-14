@@ -35,3 +35,32 @@ int connect_to_server(char* hostname, int port){
 
     return socket_fd;
 }
+
+void send_token(int client_fd){
+    char filename[] = "token.txt";
+    //Checks if file exists. If it doesn't it's created.
+    FILE *file = fopen(filename, "r");
+    if(!file){
+        file = fopen(filename, "w");
+        fclose(file);
+    }
+    file = fopen(filename, "r");
+    char token[65];
+    
+    //Checks if file is empty. If it is, the new token is saved
+    fgets(token, sizeof(token), file);
+    send(client_fd, token, strlen(token), 0);
+
+    printf("%s\n", token);
+    printf("%d\n", strlen(token));
+    if (strlen(token)!=TOKEN_LENGTH){
+        fclose(file);
+        file = fopen(filename, "w");
+        recv(client_fd, token, sizeof(token), 0);
+
+        fprintf(file, "%s", token);
+    }
+
+    printf("%s\n", token);
+    fclose(file);
+}

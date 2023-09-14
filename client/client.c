@@ -1,7 +1,6 @@
 #include "connection.h"
 #include <string.h>
 #include <unistd.h>
-#include "../common/common.h"
 
 error create_game(int client_fd);
 error join_game(int client_fd);
@@ -63,6 +62,7 @@ int main(int argc, char **argv){
     
     //Manda input
     while(1){
+        send_token(client_fd);
         printf("%s\n", command_prompt);    
         fgets(input, sizeof(input), stdin);
         flush_stdin();
