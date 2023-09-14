@@ -42,8 +42,8 @@ void *client_worker(void *args){
     int client_fd = data->client_fd;
     
     char input_buffer[64];
-    char game_name[GAME_NAME_MAX_LENGHT]; 
-    unsigned int timer_lenght;
+    char game_name[GAME_NAME_MAX_LENGTH]; 
+    unsigned int timer_length;
     client_choice choice;
     ssize_t bytes_read;
     error error_code = 0;
@@ -58,7 +58,7 @@ void *client_worker(void *args){
 
                     char *token;
                     token = strtok(input_buffer, ":");
-                    strncpy(game_name, token, GAME_NAME_MAX_LENGHT);
+                    strncpy(game_name, token, GAME_NAME_MAX_LENGTH);
                         
                     token = strtok(NULL, "");
                     if(token == NULL || !(is_number(token))){
@@ -66,10 +66,10 @@ void *client_worker(void *args){
                         break;
                     }
                     else{
-                        timer_lenght = strtoul(token,0,0);
+                        timer_length = strtoul(token,0,0);
                     }
 
-                    error_code = create_game(client_fd, game_name, timer_lenght);
+                    error_code = create_game(client_fd, game_name, timer_length);
                     break;
                     
                 case JOIN_GAME:
@@ -93,10 +93,10 @@ void *client_worker(void *args){
     return NULL;
 }
 
-error create_game(int client_fd, char *game_name, unsigned int timer_lenght){
+error create_game(int client_fd, char *game_name, unsigned int timer_length){
     error error_code;
     
-    error_code = insert_game(game_name, timer_lenght);
+    error_code = insert_game(game_name, timer_length);
 
     if(error_code){
         return error_code;

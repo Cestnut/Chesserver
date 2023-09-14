@@ -13,12 +13,12 @@ typedef struct player{
 
 typedef struct match_data{
     player *players;
-    unsigned int timer_lenght;
+    unsigned int timer_length;
     unsigned short int num_players; //usato per scorrere la lista dei giocatori
 } match_data;
 
 typedef struct game{
-    char name[GAME_NAME_MAX_LENGHT];
+    char name[GAME_NAME_MAX_LENGTH];
     pthread_t tid;
     pthread_rwlock_t rwlock;
     match_data *match_data;
@@ -33,7 +33,7 @@ typedef struct games_struct{
 games_struct *games;
 
 void init_games();
-error insert_game(char *name, unsigned int timer_lenght);
+error insert_game(char *name, unsigned int timer_length);
 game *get_game(char *name);
 void delete_game(char *name);
 

@@ -103,7 +103,7 @@ int main(int argc, char **argv){
 error create_game(int client_fd){
     char input_buffer[64];
     error error_code;
-    puts("Insert game name, timer lenght in the form: <GAME_NAME>:<TIMER>");
+    puts("Insert game name, timer length in the form: <GAME_NAME>:<TIMER>");
     fgets(input_buffer, sizeof(input_buffer), stdin);
     flush_stdin();
     send(client_fd, input_buffer, strlen(input_buffer), 0);
@@ -112,7 +112,7 @@ error create_game(int client_fd){
     return error_code;
 }
 error join_game(int client_fd){
-    char input_buffer[GAME_NAME_MAX_LENGHT];
+    char input_buffer[GAME_NAME_MAX_LENGTH];
     error error_code;
     puts("Insert game name: ");
     fgets(input_buffer, sizeof(input_buffer), stdin);

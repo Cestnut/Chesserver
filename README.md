@@ -79,12 +79,12 @@ typedef struct player{
 
 typedef struct match_data{
     player *players;
-    unsigned int timer_lenght;
+    unsigned int timer_length;
     unsigned short int num_players; //usato per scorrere la lista dei giocatori
 } match_data;
 
 typedef struct game{
-    char name[GAME_NAME_MAX_LENGHT];
+    char name[GAME_NAME_MAX_LENGTH];
     pthread_t tid;
     match_data *match_data;
     UT_hash_handle hh;

@@ -10,7 +10,7 @@ typedef enum{
     INVALID_INPUT
 } error;
 
-#define GAME_NAME_MAX_LENGHT 32
+#define GAME_NAME_MAX_LENGTH 32
 
 void flush_stdin();
 int is_number(char *string);
