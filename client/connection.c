@@ -1,5 +1,6 @@
 #include "connection.h"
 
+//returns a fd on success, -1 on failure
 int connect_to_server(char* hostname, int port){
     int socket_fd;
     struct sockaddr_in server_addr;
@@ -29,10 +30,8 @@ int connect_to_server(char* hostname, int port){
 
 
     if(connect(socket_fd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1){
-        printf("Error connecting: errno %d\n", errno);
-        exit(0);
+        return -1;
     }
-    printf("Connected succesfully\n");
 
     return socket_fd;
 }

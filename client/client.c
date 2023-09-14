@@ -1,5 +1,6 @@
 #include "connection.h"
 #include <string.h>
+#include <unistd.h>
 #include "../common/common.h"
 
 error create_game(int client_fd);
@@ -34,10 +35,24 @@ int main(int argc, char **argv){
         }
     }while(error_flag);
     
+    int max_attempts = 3, attempt = 1;
+    while(1){   
+        client_fd = connect_to_server(hostname, port);        
+        if(client_fd != -1){
+            printf("Connected succesfully\n");
+            break;
+        }
 
-    //Connects to game server
-    client_fd = connect_to_server(hostname, port);
-    
+        if(attempt == max_attempts){
+            printf("Couldn't connect to server. Exiting process.");
+            exit(0);
+        }
+
+        printf("Could not connect to server. Retrying.\n");
+        attempt++;
+        sleep(1);
+    }
+        
     char input[10];
     client_choice choice;
     char command_prompt[] = "Insert a command:\n"
@@ -45,8 +60,9 @@ int main(int argc, char **argv){
                             "> 2: Join game\n"
                             "> 3: Exit\n";
     error error_code;
+    
+    //Manda input
     while(1){
-        //Manda input\n
         printf("%s\n", command_prompt);    
         fgets(input, sizeof(input), stdin);
         flush_stdin();
