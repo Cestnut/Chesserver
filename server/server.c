@@ -1,7 +1,12 @@
 #include "server_connection.h"
 #include "game_handling.h"
+#include <stdlib.h>
+#include <time.h>
+
 
 int main(int argc, char **argv){
+
+    srand(time(NULL));
 
     int server_fd, client_fd;
     int port = 5555;

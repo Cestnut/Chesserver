@@ -14,3 +14,4 @@ typedef enum{
 
 void flush_stdin();
 int is_number(char *string);
+char *random_string(int bytes_length);
