@@ -1,6 +1,7 @@
+#define _GNU_SOURCE
+#include <pthread.h>
 #include "../common/common.h"
 #include "../common/uthash.h"
-#include <pthread.h>
 
 typedef struct player{
     char *token;
