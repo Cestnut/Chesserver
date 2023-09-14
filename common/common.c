@@ -18,13 +18,14 @@ int is_number(char *string){
 }
 
 char *random_string(int bytes_length){
-    
-    char *output_string = malloc(bytes_length * sizeof(char));
+    //Adds 1 element to account for trailing zero
+    char *output_string = malloc((bytes_length * sizeof(char)) + 1);
 
     for(int i = 0; i < bytes_length; i++){
         //Prints to every character and hex value between 0x0 and 0xF
         sprintf(&output_string[i], "%hhX", rand()%16);
     }
+    output_string[bytes_length] = 0x0;
 
     return output_string;
 }
