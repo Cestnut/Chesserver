@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
 
 void flush_stdin(){
     int c;
@@ -10,7 +12,7 @@ void flush_stdin(){
 }
 
 int is_number(char *string){
-    for (char *chr = string ; *chr ; chr++){
+    for (char *chr = string ; *chr && *chr != '\n'; chr++){
         if (!isdigit(*chr))
         return 0;
     }
@@ -28,4 +30,10 @@ char *random_string(int bytes_length){
     output_string[bytes_length] = 0x0;
 
     return output_string;
+}
+
+ssize_t recvline(int sockfd, char *buf, size_t len, int flags){
+    ssize_t bytes_read = recv(sockfd, buf, len, flags);
+    if(buf[len-1] == '\n') buf[len-1] = 0x0;
+    return bytes_read;
 }

@@ -14,7 +14,10 @@ typedef enum{
 void flush_stdin();
 int is_number(char *string);
 char *random_string(int bytes_length);
+ssize_t recvline(int sockfd, char *buf, size_t len, int flags);
+
 
 #define GAME_NAME_MAX_LENGTH 32
 #define TOKEN_LENGTH 64
 #define MAX_PLAYERS 2
+#define DEBUG 1
