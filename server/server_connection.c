@@ -158,7 +158,7 @@ error join_game(int client_fd, char *game_name, char *token){
             printf("Game is empty, joining player\n");
         }
     }//If game is not full
-    else if(game->match_data->max_players < game->match_data->connected_players){
+    else if(game->match_data->connected_players < game->match_data->max_players){
         game->match_data->players->next_player = new_player;
         game->match_data->connected_players++;
         error_code = NO_ERROR;
