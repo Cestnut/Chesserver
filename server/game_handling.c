@@ -11,7 +11,7 @@ void init_games(){
 error insert_game(char *name, unsigned int timer_length){
     error error_code;
     pthread_rwlock_wrlock(&games->rwlock);
-    if(get_game(name) == NULL){
+    if(get_game(name) != NULL){
         error_code = GAME_NAME_TAKEN;
     }
     else{
@@ -61,6 +61,21 @@ void delete_game(char *name){
 
 void *run_game(void *args){
     game* current_game = (game*)args;
+    player *curr = current_game->match_data->players;
+
+    //Iterates until game room is full
+    for(int i=0; i<current_game->match_data->max_players; i++){
+        while(curr == NULL){
+            if (DEBUG) printf("There are %d players out of %d in the game. Waiting...\n", i, current_game->match_data->max_players);
+            sleep(1);
+        }
+        curr = curr->next_player;
+    }
+
+    if(DEBUG){
+        printf("Game room %s is full\n", current_game->name);
+    }
+
     while(1){
         ;
     }
