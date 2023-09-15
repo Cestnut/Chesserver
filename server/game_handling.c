@@ -65,12 +65,15 @@ void *run_game(void *args){
 
     //Iterates until game room is full
     for(int i=0; i<current_game->match_data->max_players; i++){
-        while(curr == NULL){
+        while(curr->next_player == NULL){
             if (DEBUG) printf("There are %d players out of %d in the game. Waiting...\n", i, current_game->match_data->max_players);
             sleep(1);
         }
         curr = curr->next_player;
     }
+
+    //Connects the last player to the first, making the linked list circular
+    
 
     if(DEBUG){
         printf("Game room %s is full\n", current_game->name);
