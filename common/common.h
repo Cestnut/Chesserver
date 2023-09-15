@@ -1,3 +1,9 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+
 //enum begins from 1 because values are casted from string with atoi(). 
 //atoi returns 0 when an invalid character is met.
 typedef enum {CREATE_GAME=1, JOIN_GAME, EXIT} client_choice;
@@ -14,7 +20,7 @@ typedef enum{
 void flush_stdin();
 int is_number(char *string);
 char *random_string(int bytes_length);
-ssize_t recvline(int sockfd, char *buf, size_t len, int flags);
+ssize_t recvline(int sockfd, void *buf, size_t len, int flags);
 
 
 #define GAME_NAME_MAX_LENGTH 32

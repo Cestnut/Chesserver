@@ -1,8 +1,4 @@
-#include <stdio.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
+#include "common.h"
 
 void flush_stdin(){
     int c;
@@ -32,8 +28,16 @@ char *random_string(int bytes_length){
     return output_string;
 }
 
-ssize_t recvline(int sockfd, char *buf, size_t len, int flags){
+void strip_newlines(char *buffer, size_t len){
+    for(size_t i= 1; i<len; i++){
+        if(buffer[len-i]=='\n'){
+            buffer[len-i] = 0x0;
+        }
+    }
+}
+
+ssize_t recvline(int sockfd, void *buf, size_t len, int flags){
     ssize_t bytes_read = recv(sockfd, buf, len, flags);
-    if(buf[len-1] == '\n') buf[len-1] = 0x0;
+    strip_newlines(buf, len);
     return bytes_read;
 }
