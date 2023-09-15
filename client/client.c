@@ -10,10 +10,6 @@ int main(int argc, char **argv){
     int client_fd;
     char server_addr[32], *hostname; 
     int port, error_flag;
-    char output_buffer[BUFFER_LEN], input_buffer[BUFFER_LEN];
-    
-    //Sets to 0 output buffer
-    memset(output_buffer, 0, BUFFER_LEN);
 
     //Parses hostname and port number from user input
     do{
@@ -71,10 +67,16 @@ int main(int argc, char **argv){
         switch(choice){
             case CREATE_GAME:
                 error_code = create_game(client_fd);
+                if(error_code==NO_ERROR){
+                    printf("Game created and joined\n");
+                }
                 break;
                     
             case JOIN_GAME:
                 error_code = join_game(client_fd);
+                if(error_code==NO_ERROR){
+                    printf("Game joined\n");
+                }
                 break;
 
             case EXIT:
@@ -86,15 +88,21 @@ int main(int argc, char **argv){
         switch(error_code){
                 case NO_ERROR:
                     break;
+                case INVALID_INPUT:
+                    puts("The input you sent is not valid");
+                    break;
                 case GAME_NAME_TAKEN:
                     puts("A game with that name already exists");
+                    break;
                 case GAME_DOESNT_EXIST:
                     puts("There isn't a game with such name");
+                    break;
                 case GAME_FULL:
                     puts("This game is full");
+                    break;
             }
     }
-
+    
     close(client_fd);
 
     return 0;
@@ -108,9 +116,10 @@ error create_game(int client_fd){
     flush_stdin();
     send(client_fd, input_buffer, strlen(input_buffer), 0);
 
-    recv(client_fd, &error_code, sizeof(client_choice), 0);
+    recv(client_fd, &error_code, sizeof(error_code), 0);
     return error_code;
 }
+
 error join_game(int client_fd){
     char input_buffer[GAME_NAME_MAX_LENGTH];
     error error_code;
@@ -119,6 +128,6 @@ error join_game(int client_fd){
     flush_stdin();
     send(client_fd, input_buffer, strlen(input_buffer), 0);
 
-    recv(client_fd, &error_code, sizeof(client_choice), 0);
+    recv(client_fd, &error_code, sizeof(error_code), 0);
     return error_code;
 }
