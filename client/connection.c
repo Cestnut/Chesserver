@@ -52,7 +52,7 @@ void send_token(int client_fd){
     send(client_fd, token, strlen(token), 0);
 
     printf("%s\n", token);
-    printf("%d\n", strlen(token));
+    printf("%lu\n", strlen(token));
     if (strlen(token)!=TOKEN_LENGTH){
         fclose(file);
         file = fopen(filename, "w");
