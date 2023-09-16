@@ -144,3 +144,9 @@ Per l'hashmap è stata usata la seguente implementazione: https://troydhanson.gi
     join_game:
     - dovrebbe semplicemente allocare al game un player
 
+
+
+In run_game(), il controllo che la stanza sia piena viene fatto confrontando connected_players e max_players.
+Per non avere attesa attiva tra un confronto e l'altro è stata utilizzata una condition variable come meccanismo di sincronizzazione, che viene segnalata ogni volta che un nuovo giocatore si connette. 
+
+Il motivo per cui è stato usato questo meccanismo e non un semaforo inizializzato a max players è che in questo caso non sarebbe più stato necessario il confronto tra le due variabili, mentre l'approccio con la condition variable rende più coerente e intuitiva l'implementazione, anche dato che il confronto tra connected_players e max_players viene fatto ogni volta che si vuole verificare lo stato di riempimento della stanza.
