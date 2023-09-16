@@ -6,8 +6,8 @@ board_struct *init_board(){
     { "wR", "wP", "..", "..", "..", "..", "bP", "bR" },
     { "wN", "wP", "..", "..","..", "..", "bP", "bN" },
     { "wB", "wP", "..", "..","..", "..", "bP", "bB" },
-    { "wK", "wP", "..", "..","..", "..", "bP", "bK" },
     { "wQ", "wP", "..", "..","..", "..", "bP", "bQ" },
+    { "wK", "wP", "..", "..","..", "..", "bP", "bK" },
     { "wB", "wP", "..", "..","..", "..", "bP", "bB" },
     { "wN", "wP", "..", "..","..", "..", "bP", "bN" },
     { "wR", "wP", "..", "..", "..", "..", "bP", "bR" }
@@ -36,6 +36,9 @@ board_struct *init_board(){
                 case '.':
                     piece.type = NO_TYPE;
                     break;
+                case 'P':
+                    piece.type = PAWN;
+                    break;
                 case 'R':
                     piece.type = ROOK;
                     break;
@@ -58,18 +61,20 @@ board_struct *init_board(){
 }
 
 void render_board(board_struct *board){
-    char symbols[] = ".PRNBQK";
+    char symbols[3][7] = {"......", ".PRNBQK", ".prnbqk"};
     for(int row=0; row<BOARD_SIZE; row++){
+        printf("%d ", row+1);
         for(int col=0; col<BOARD_SIZE; col++){
-            char color;
             piece_struct piece = board->board[col][row];
-            if(piece.color == WHITE) color='w';
-            else if(piece.color == BLACK) color='b';
-            else color = '.';
-            
-            printf(" %c%c ", color, symbols[piece.type]);
+            printf("%3c ", symbols[piece.color][piece.type]);
         }
         printf("\n");
     }
 
+    char columns[] = "ABCDEFGH";
+    printf("  ");
+    for(int i=0; i<sizeof(columns); i++){
+        printf("%3c ", columns[i]);
+    }
+    printf("\n\n");
 }
