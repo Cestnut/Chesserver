@@ -57,8 +57,8 @@ int main(int argc, char **argv){
     error error_code;
     
     //Manda input
+    send_token(client_fd);
     while(1){
-        send_token(client_fd);
         printf("%s\n", command_prompt);    
         fgets(input, sizeof(input), stdin);
         flush_stdin();
@@ -81,6 +81,7 @@ int main(int argc, char **argv){
 
             case EXIT:
                 puts("GAME EXITED\n");        
+                close(client_fd);
                 exit(0);
                 break;
             }
