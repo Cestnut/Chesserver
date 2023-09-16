@@ -72,7 +72,10 @@ void *client_worker(void *args){
             switch(choice){
                 case CREATE_GAME:
                     recvline(client_fd, input_buffer, sizeof(input_buffer), 0);
-
+                    //Stops the routine if an empty string has been sent 
+                    // (can happen in case the client closes the connection)
+                    if(*input_buffer == 0) break;
+                    
                     char *split_token;
                     split_token = strtok(input_buffer, ":");
                     strncpy(game_name, split_token, GAME_NAME_MAX_LENGTH);
@@ -80,7 +83,7 @@ void *client_worker(void *args){
                     split_token = strtok(NULL, "");
                     if(split_token == NULL || !(is_number(split_token))){
                         error_code = INVALID_INPUT;
-                        if(DEBUG) printf("Input in creating room is not valid, wrong token: %s\n", split_token);
+                        if(DEBUG) printf("Input in creating room is not valid, split_token: %s\n", split_token);
                         
                         break;
                     }
@@ -94,6 +97,7 @@ void *client_worker(void *args){
                     
                 case JOIN_GAME:
                     recvline(client_fd, game_name, sizeof(game_name), 0);
+                    if(*game_name == 0) break;
                     error_code = join_game(client_fd, game_name, client_token);
                     printf("GAME JOINED\n");
                     break;
@@ -139,46 +143,49 @@ error join_game(int client_fd, char *game_name, char *token){
         error_code = GAME_DOESNT_EXIST;
         return error_code;
     }
-    player* new_player = malloc(sizeof(player));
-    new_player->socket_fd = client_fd;
-    new_player->timer = game->match_data->timer_length;
-    new_player->next_player = NULL;
-    new_player->token = token;
-
 
     pthread_rwlock_wrlock(&game->rwlock);
 
-    //If game is empty
-    if(game->match_data->connected_players == 0){
-        game->match_data->players = new_player;
-        game->match_data->connected_players++;
-        error_code = NO_ERROR;
 
-        if(DEBUG){
-            printf("Game is empty, joining player\n");
+    if(game->match_data->connected_players < game->match_data->max_players){
+        player* new_player = malloc(sizeof(player));
+        new_player->socket_fd = client_fd;
+        new_player->timer = game->match_data->timer_length;
+        new_player->next_player = NULL;
+        new_player->token = token;
+
+        //If game is empty, player has to be added to head, else after the last player
+        if(game->match_data->connected_players == 0){
+                if(DEBUG) printf("Game is empty, joining player\n");
+                game->match_data->players = new_player;
         }
-    }//If game is not full
-    else if(game->match_data->connected_players < game->match_data->max_players){
-        game->match_data->players->next_player = new_player;
+        else{
+                if(DEBUG) printf("Game is not full, joining player\n");
+                game->match_data->players->next_player = new_player;
+        }
+
+        //Increments counter of connected players, and signals game that a new player has joined
         game->match_data->connected_players++;
         error_code = NO_ERROR;
-        if(DEBUG){
-            printf("Game is not full, joining player\n");
-        }        
+        pthread_cond_signal(&game->new_player_cond);        
 
-    }//If game is full but the player is playing
+    }//If game is full but the player is playing, update client_fd
     else if(validate_token(game_name, token)){
         error_code = NO_ERROR;
-        if(DEBUG){
-            printf("Game full, but token %s is validated\n", token);
+        player *curr = game->match_data->players;
+        for(int i=0; i<game->match_data->connected_players; i++){
+            if(!strcmp(curr->token, token)){
+                curr->socket_fd = client_fd;
+            }
+            curr = curr->next_player;
         }
+
+        if(DEBUG) printf("Game full, but token %s is validated\n", token);
     }//If the game is full and the player is not playing
     else{
-        if(DEBUG){
-            printf("Game is full, player cannot join\n");
-        }
-        free(new_player);
+
         error_code = GAME_FULL;
+        if(DEBUG) printf("Game is full, player cannot join\n");
     }
 
     pthread_rwlock_unlock(&game->rwlock);
@@ -190,7 +197,7 @@ int validate_token(char *game_name, char *token){
     game *game_data = get_game(game_name);
     if(game_data != NULL){
         player *curr = game_data->match_data->players;
-        for(int i=0; i<game_data->match_data->connected_players && curr!=NULL; i++){
+        for(int i=0; i<game_data->match_data->connected_players; i++){
             if(!strcmp(curr->token, token)){
                 if(DEBUG){
                     printf("Token %s is validated\n", token);
