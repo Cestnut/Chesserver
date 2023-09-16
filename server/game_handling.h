@@ -26,6 +26,8 @@ typedef struct game{
     char name[GAME_NAME_MAX_LENGTH];
     pthread_t tid;
     pthread_rwlock_t rwlock;
+    pthread_cond_t new_player_cond;
+    pthread_mutex_t new_player_mutex;
     match_data *match_data;
     UT_hash_handle hh;
 } game;

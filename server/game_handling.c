@@ -25,7 +25,9 @@ error insert_game(char *name, unsigned int timer_length){
         game_entry->match_data = data;
 
         pthread_rwlock_init(&game_entry->rwlock, NULL);
-        
+        pthread_mutex_init(&game_entry->new_player_mutex, NULL);
+        pthread_cond_init(&game_entry->new_player_cond, NULL);
+
         pthread_t tid;
         pthread_create(&tid, NULL, run_game, (void *)game_entry);    
         game_entry->tid = tid;
@@ -64,22 +66,23 @@ void *run_game(void *args){
     player *curr = current_game->match_data->players;
 
     //Iterates until game room is full
-    for(int i=0; i<current_game->match_data->max_players; i++){
-        while(curr->next_player == NULL){
-            if (DEBUG) printf("There are %d players out of %d in the game. Waiting...\n", i, current_game->match_data->max_players);
-            sleep(1);
-        }
-        curr = curr->next_player;
+    while(current_game->match_data->connected_players < current_game->match_data->max_players){
+        if (DEBUG) printf("There are %d players out of %d in the game. Waiting...\n",   current_game->match_data->connected_players, 
+                                                                                        current_game->match_data->max_players);        
+        pthread_cond_wait(&current_game->new_player_cond, &current_game->new_player_mutex);
     }
-
-    //Connects the last player to the first, making the linked list circular
     
-
     if(DEBUG){
         printf("Game room %s is full\n", current_game->name);
     }
 
+    //Connects the last player to the first, making the linked list circular
+    while(curr->next_player != NULL) curr = curr->next_player;
+    curr->next_player = current_game->match_data->players;     
+
     while(1){
-        ;
+        printf("%d\n", curr->socket_fd);
+        curr = curr->next_player;
+        sleep(2);
     }
 }
