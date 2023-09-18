@@ -27,3 +27,5 @@ ssize_t recvline(int sockfd, void *buf, size_t len, int flags);
 #define TOKEN_LENGTH 64
 #define MAX_PLAYERS 2
 #define DEBUG 1
+#define FALSE 0
+#define TRUE 1
