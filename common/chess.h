@@ -21,7 +21,7 @@ typedef struct piece{
 
 //board coordinates are to be considered [col][row], to be coherent with how cells are addressed in chess.
 typedef struct board{
-    piece_struct board[BOARD_SIZE][BOARD_SIZE];
+    piece_struct *board[BOARD_SIZE][BOARD_SIZE];
 } board_struct;
 
 board_struct *init_board();
