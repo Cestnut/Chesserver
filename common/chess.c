@@ -55,18 +55,26 @@ board_struct *init_board(){
                     piece.type = QUEEN;
                     break;
             }
+            piece.moved_flag = FALSE;
             board->board[col][row] = piece;
+
         }
     }
+    return board;
 }
 
 void render_board(board_struct *board){
-    char symbols[3][7] = {"......", ".PRNBQK", ".prnbqk"};
+    piece_struct piece;
     for(int row=0; row<BOARD_SIZE; row++){
         printf("%d ", row+1);
         for(int col=0; col<BOARD_SIZE; col++){
-            piece_struct piece = board->board[col][row];
-            printf("%3c ", symbols[piece.color][piece.type]);
+            piece = board->board[col][row];
+            char symbol;
+            if(piece.color == NO_COLOR) symbol = '.';
+            else if(piece.color == WHITE) symbol = WHITE_CHARSET[piece.type];
+            else if(piece.color == BLACK) symbol = BLACK_CHARSET[piece.type];
+
+            printf("%3c ", symbol);
         }
         printf("\n");
     }
@@ -79,7 +87,66 @@ void render_board(board_struct *board){
     printf("\n\n");
 }
 
-int validate_move(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst){
+Point get_king_position(board_struct *board, piece_color player_color){
+    piece_struct piece;
+    Point point;
+    for(int row=0; row<BOARD_SIZE; row++){
+        for(int col=0; col<BOARD_SIZE; col++){
+            piece = board->board[col][row];
+            if(piece.color == player_color && piece.type == KING){
+                point.col = col;
+                point.row = row;
+                return point;
+            }
+        }
+    }
+}
+
+int is_move_valid(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst){
+    piece_struct tmp_piece;
+    if(is_pattern_valid(board, player_color, col_src, row_src, col_dst, row_dst)){
+        //Make the move but save the piece in destination, since we may have to rollback
+        tmp_piece = board->board[col_dst][row_dst];
+        
+        board->board[col_dst][row_dst] = board->board[col_src][row_src];
+        board->board[col_src][row_src].color = NO_COLOR;
+        board->board[col_src][row_src].type = NO_TYPE;
+        
+        if(is_in_check(board, player_color)){
+            board->board[col_src][row_src] = board->board[col_dst][row_dst];
+            board->board[col_dst][row_dst] = tmp_piece;
+            return FALSE;
+        }
+        else{
+            board->board[col_dst][row_dst].moved_flag = TRUE;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+int is_in_check(board_struct *board, piece_color player_color){
+    piece_color opponent_color;
+    piece_struct piece;
+    Point king_position = get_king_position(board, player_color);
+    if(player_color == WHITE) opponent_color=BLACK;
+    else if(player_color == BLACK) opponent_color = WHITE;
+
+    for(int row=0; row<BOARD_SIZE; row++){
+        for(int col=0; col<BOARD_SIZE; col++){
+            piece = board->board[col][row];
+            if(piece.color == opponent_color){
+                if(is_pattern_valid(board, opponent_color, col, row, king_position.col, king_position.row)){
+                    return TRUE;
+                }
+            }
+        }
+    }
+    return FALSE;
+
+}
+
+int is_pattern_valid(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst){
     piece_struct src_piece = board->board[col_src][row_src];
     piece_struct dst_piece = board->board[col_dst][row_dst];
     
@@ -99,32 +166,34 @@ int validate_move(board_struct *board, piece_color player_color, int col_src, in
     //if destination piece is owned by player
     if(dst_piece.color == player_color) return FALSE;
 
+    printf("Basic controls passed\n");
 
     switch(src_piece.type){
         case PAWN:
-            validate_pawn_move(board, player_color, col_src, row_src, col_dst, row_dst);
+            printf("PAWN\n");
+            return is_pattern_valid_pawn(board, player_color, col_src, row_src, col_dst, row_dst);
             break;
         case ROOK:
-            validate_rook_move(board, player_color, col_src, row_src, col_dst, row_dst);            
+            return is_pattern_valid_rook(board, player_color, col_src, row_src, col_dst, row_dst);            
             break;
         case KNIGHT:
-            validate_knight_move(board, player_color, col_src, row_src, col_dst, row_dst);
+            return is_pattern_valid_knight(board, player_color, col_src, row_src, col_dst, row_dst);
             break;
         case BISHOP:
-            validate_bishop_move(board, player_color, col_src, row_src, col_dst, row_dst);
+            return is_pattern_valid_bishop(board, player_color, col_src, row_src, col_dst, row_dst);
             break;
         case KING:
-            validate_king_move(board, player_color, col_src, row_src, col_dst, row_dst);
+            return is_pattern_valid_king(board, player_color, col_src, row_src, col_dst, row_dst);
             break;
         case QUEEN:
-            validate_queen_move(board, player_color, col_src, row_src, col_dst, row_dst);
+            return is_pattern_valid_queen(board, player_color, col_src, row_src, col_dst, row_dst);
             break;
     }
 
 }
 
 
-int validate_pawn_move(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst){
+int is_pattern_valid_pawn(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst){
     piece_struct src_piece = board->board[col_src][row_src];
     piece_struct dst_piece = board->board[col_dst][row_dst];    
     
@@ -138,7 +207,7 @@ int validate_pawn_move(board_struct *board, piece_color player_color, int col_sr
 
     //Checks if destination row is 1 row space forward and square is empty
     //else if destination row is 2 spaces forward and piece hasn't moved yet and square is empty
-    if(row_src == row_dst+step){
+    if(row_dst == row_src+step){
         //If destination column is the same and there are no pieces there 
         //else if destination column is shifted of one and there is an opponent's piece there
         if(col_src == col_dst && dst_piece.type==NO_TYPE){
@@ -147,15 +216,16 @@ int validate_pawn_move(board_struct *board, piece_color player_color, int col_sr
         else if((col_src == col_dst + 1 || col_src == col_dst - 1) && dst_piece.color==opponent_color){
             return TRUE;
         }
+        else return FALSE;
     }
-    else if(row_src == row_dst+(2*step) && src_piece.moved_flag == 0 && dst_piece.type==NO_TYPE){
+    else if(row_dst == row_src+(2*step) && src_piece.moved_flag == 0 && dst_piece.type==NO_TYPE){
         return TRUE;
     }
     else{
         return FALSE;
     } 
 }
-int validate_rook_move(board_struct *board, piece_color piece_color, int col_src, int row_src, int col_dst, int row_dst){
+int is_pattern_valid_rook(board_struct *board, piece_color piece_color, int col_src, int row_src, int col_dst, int row_dst){
     int step; //Represents the direction of movement (-1 or +1)
     //If movement is straight (only one coordinate is changing)
     if(row_src==row_dst){
@@ -189,7 +259,7 @@ int validate_rook_move(board_struct *board, piece_color piece_color, int col_src
     }    
 }
 
-int validate_knight_move(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst){
+int is_pattern_valid_knight(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst){
     //Movement is valid if one of the two coordinates changes by 1 and the other by 2.
     //Knight is the only piece that doesn't care if the path is obstructed
     if(col_dst == col_src + 2 || col_dst == col_src - 2){
@@ -205,7 +275,7 @@ int validate_knight_move(board_struct *board, piece_color player_color, int col_
     }
 }
 
-int validate_bishop_move(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst){
+int is_pattern_valid_bishop(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst){
     //Movement is valid if change of row and column are of the same magnitude (absolute value of variation)
     int row_variation, col_variation, row_step, column_step;
     row_variation = row_dst - row_src;
@@ -233,11 +303,11 @@ int validate_bishop_move(board_struct *board, piece_color player_color, int col_
 }
 
 
-int validate_queen_move(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst){
-    return validate_rook_move(board, player_color, col_src, row_src, col_dst, row_dst) || validate_bishop_move(board, player_color, col_src, row_src, col_dst, row_dst);
+int is_pattern_valid_queen(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst){
+    return is_pattern_valid_rook(board, player_color, col_src, row_src, col_dst, row_dst) || is_pattern_valid_bishop(board, player_color, col_src, row_src, col_dst, row_dst);
 }
 
-int validate_king_move(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst){
+int is_pattern_valid_king(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst){
     //Movement is valid only if row or column change by one
     int row_variation, col_variation;
     row_variation = row_dst - row_src;

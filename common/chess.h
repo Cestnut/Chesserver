@@ -1,11 +1,17 @@
 //header declaring all data structures for playing chess and methods for parsing, validating, rendering and making moves
 #include <stdio.h>
 #include <stdlib.h>
-#include <common.h>
+#include "common.h"
 #define BOARD_SIZE 8
+#define WHITE_CHARSET ".PRNBQK"
+#define BLACK_CHARSET ".prnbqk"
 
 typedef enum {NO_COLOR=0, WHITE, BLACK} piece_color;
 typedef enum {NO_TYPE=0, PAWN, ROOK, KNIGHT, BISHOP, QUEEN, KING} piece_type;
+
+typedef struct Point{
+    int row, col;
+} Point;
 
 typedef struct piece{
     piece_color color;
@@ -21,14 +27,27 @@ typedef struct board{
 board_struct *init_board();
 void render_board(board_struct *board);
 
-int validate_move(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst);
+//Returns the position of the king of the given point
+Point get_king_position(board_struct *board, piece_color player_color);
+
+int is_move_valid(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst);
+
+int is_pattern_valid(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst);
 //Each of this functions check if pattern is respected and path is clear
-int validate_pawn_move(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst);
-int validate_rook_move(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst);
-int validate_bishop_move(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst);
-int validate_knight_move(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst);
-int validate_queen_move(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst);
-int validate_king_move(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst);
+int is_pattern_valid_pawn(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst);
+int is_pattern_valid_rook(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst);
+int is_pattern_valid_bishop(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst);
+int is_pattern_valid_knight(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst);
+int is_pattern_valid_queen(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst);
+int is_pattern_valid_king(board_struct *board, piece_color player_color, int col_src, int row_src, int col_dst, int row_dst);
+
+int has_valid_moves_pawn(board_struct *board, piece_color player_color, int col_src, int row_src);
+int has_valid_moves_rook(board_struct *board, piece_color player_color, int col_src, int row_src);
+int has_valid_moves_bishop(board_struct *board, piece_color player_color, int col_src, int row_src);
+int has_valid_moves_knight(board_struct *board, piece_color player_color, int col_src, int row_src);
+int has_valid_moves_queen(board_struct *board, piece_color player_color, int col_src, int row_src);
+int has_valid_moves_king(board_struct *board, piece_color player_color, int col_src, int row_src);
+
 
 int is_in_check(board_struct *board, piece_color color);
-int can_move(board_struct *board, piece_color color);
+int is_stalemate(board_struct *board, piece_color color);
