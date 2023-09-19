@@ -133,7 +133,7 @@ int is_move_valid(board_struct *board, piece_color player_color, int col_src, in
         }
     }
     else{
-        printf("Pattern invalid");
+        if(DEBUG) printf("Pattern invalid");
         return FALSE;
     }
 }
@@ -150,7 +150,7 @@ int is_in_check(board_struct *board, piece_color player_color){
             piece = board->board[col][row];
             if(piece->color == opponent_color){
                 if(is_pattern_valid(board, opponent_color, col, row, king_position.col, king_position.row)){
-                    printf("This would put the king in check from %d%d that could go to %d%d", col, row, king_position.col, king_position.row);
+                    if(DEBUG) printf("This would put the king in check from %d%d that could go to %d%d", col, row, king_position.col, king_position.row);
                     return TRUE;
                 }
             }
@@ -180,11 +180,10 @@ int is_pattern_valid(board_struct *board, piece_color player_color, int col_src,
     //if destination piece is owned by player
     if(dst_piece->color == player_color) return FALSE;
 
-    printf("Basic controls passed\n");
+    if(DEBUG) printf("Basic controls passed\n");
 
     switch(src_piece->type){
         case PAWN:
-            printf("PAWN\n");
             return is_pattern_valid_pawn(board, player_color, col_src, row_src, col_dst, row_dst);
             break;
         case ROOK:
