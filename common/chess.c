@@ -132,7 +132,10 @@ int is_move_valid(board_struct *board, piece_color player_color, int col_src, in
             return TRUE;
         }
     }
-    return FALSE;
+    else{
+        printf("Pattern invalid");
+        return FALSE;
+    }
 }
 
 int is_in_check(board_struct *board, piece_color player_color){
@@ -147,6 +150,7 @@ int is_in_check(board_struct *board, piece_color player_color){
             piece = board->board[col][row];
             if(piece->color == opponent_color){
                 if(is_pattern_valid(board, opponent_color, col, row, king_position.col, king_position.row)){
+                    printf("This would put the king in check from %d%d that could go to %d%d", col, row, king_position.col, king_position.row);
                     return TRUE;
                 }
             }
@@ -247,7 +251,7 @@ int is_pattern_valid_rook(board_struct *board, piece_color piece_color, int col_
         col_src += step;
         while(col_src != col_dst){
             //If in the current cell there is already a piece, return false
-            if(board->board[col_src][row_dst]->type != NO_TYPE) return FALSE;
+            if(board->board[col_src][row_src]->type != NO_TYPE) return FALSE;
             col_src += step;
         }
         return TRUE;
@@ -258,7 +262,7 @@ int is_pattern_valid_rook(board_struct *board, piece_color piece_color, int col_
 
         row_src += step;
         while(row_src != row_dst){
-            if(board->board[col_dst][row_src]->type != NO_TYPE) return FALSE;
+            if(board->board[col_src][row_src]->type != NO_TYPE) return FALSE;
             row_src += step;
         }
         return TRUE;
@@ -302,7 +306,7 @@ int is_pattern_valid_bishop(board_struct *board, piece_color player_color, int c
         col_src += column_step;
         //We check step by step if the path is occupied
         while(row_src != row_dst){
-            if(board->board[col_dst][row_dst]->type != NO_TYPE) return FALSE;
+            if(board->board[col_src][row_src]->type != NO_TYPE) return FALSE;
             row_src += row_step;
             col_src += column_step;
         }
