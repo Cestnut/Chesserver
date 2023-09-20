@@ -78,10 +78,7 @@ int main(){
     char input[10];
     player *curr_player = init_players(60);
     board_struct *board = init_board();
-    
-    render_board(board);
-    piece_color color = WHITE;
-    
+        
     Position *points = malloc(sizeof(Position)*2);
     while(TRUE){
         if(!has_valid_moves(board, curr_player->player_color)){
@@ -93,7 +90,8 @@ int main(){
             }
             break;
         }
-
+        
+        render_board(board, curr_player->player_color);        
         fgets(input, sizeof(input), stdin);
         if(parse_move(points, input) == NULL){
             printf("Invalid input\n");
@@ -102,7 +100,6 @@ int main(){
             printf("%d%d to %d%d\n", points[0].col, points[0].row, points[1].col, points[1].row);
             if(is_move_valid(board, curr_player->player_color, points[0], points[1])){
                 move_piece(board, points[0], points[1]);
-                render_board(board);
                 curr_player = curr_player->next_player;
             }
             else{

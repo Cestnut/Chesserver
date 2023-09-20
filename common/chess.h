@@ -24,7 +24,7 @@ typedef struct board{
 } board_struct;
 
 board_struct *init_board();
-void render_board(board_struct *board);
+void render_board(board_struct *board, piece_color player_color);
 
 //Returns the position of the king of the given point
 Position get_king_position(board_struct *board, piece_color player_color);

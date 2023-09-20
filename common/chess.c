@@ -64,23 +64,42 @@ board_struct *init_board(){
     return board;
 }
 
-void render_board(board_struct *board){
+void render_board(board_struct *board, piece_color player_color){
     piece_struct *piece;
-    for(int row=0; row<BOARD_SIZE; row++){
-        printf("%d ", row+1);
-        for(int col=0; col<BOARD_SIZE; col++){
-            piece = board->board[col][row];
-            char symbol;
-            if(piece->color == NO_COLOR) symbol = '.';
-            else if(piece->color == WHITE) symbol = WHITE_CHARSET[piece->type];
-            else if(piece->color == BLACK) symbol = BLACK_CHARSET[piece->type];
+    if(player_color == BLACK){
+        for(int row=0; row<BOARD_SIZE; row++){
+            printf("%d ", row+1);
+            for(int col=BOARD_SIZE-1; col>=0; col--){
+                piece = board->board[col][row];
+                char symbol;
+                if(piece->color == NO_COLOR) symbol = '.';
+                else if(piece->color == WHITE) symbol = WHITE_CHARSET[piece->type];
+                else if(piece->color == BLACK) symbol = BLACK_CHARSET[piece->type];
 
-            printf("%3c ", symbol);
+                printf("%3c ", symbol);
+            }
+            printf("\n");
         }
-        printf("\n");
+    }
+    else{
+        for(int row=BOARD_SIZE-1; row>=0; row--){
+            printf("%d ", row+1);
+            for(int col=0; col<BOARD_SIZE; col++){
+                piece = board->board[col][row];
+                char symbol;
+                if(piece->color == NO_COLOR) symbol = '.';
+                else if(piece->color == WHITE) symbol = WHITE_CHARSET[piece->type];
+                else if(piece->color == BLACK) symbol = BLACK_CHARSET[piece->type];
+
+                printf("%3c ", symbol);
+            }
+            printf("\n");
+        }
     }
 
-    char columns[] = "ABCDEFGH";
+    char columns[BOARD_SIZE];
+    if(player_color == BLACK) strncpy(columns, "HGFEDCBA", 8);
+    else if(player_color == WHITE) strncpy(columns, "ABCDEFGH", 8);
     printf("  ");
     for(int i=0; i<sizeof(columns); i++){
         printf("%3c ", columns[i]);
@@ -197,6 +216,7 @@ int has_valid_moves(board_struct *board, piece_color player_color){
                 for(int dst_row=0; dst_row < BOARD_SIZE; dst_row++){
                     dst_position.row = dst_row;
                     if(is_move_valid(board, player_color, src_position, dst_position)){
+                        if (DEBUG) printf("%d%d-%d%d is an example of valid move\n", src_col, src_row, dst_col, dst_row);
                         return TRUE;
                     }
                 }
