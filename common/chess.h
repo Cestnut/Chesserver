@@ -29,6 +29,11 @@ void render_board(board_struct *board, piece_color player_color);
 //Returns the position of the king of the given point
 Position get_king_position(board_struct *board, piece_color player_color);
 
+void move_piece(board_struct *board, Position src_position, Position dst_position);
+int is_move_safe(board_struct *board, piece_color player_color, Position src_position, Position dst_position);
+int is_in_check(board_struct *board, piece_color color);
+
+int has_valid_moves(board_struct *board, piece_color player_color);
 int is_move_valid(board_struct *board, piece_color player_color, Position src_position, Position dst_position);
 
 int is_pattern_valid(board_struct *board, piece_color player_color, Position src_position, Position dst_position);
@@ -40,15 +45,4 @@ int is_pattern_valid_knight(board_struct *board, piece_color player_color, Posit
 int is_pattern_valid_queen(board_struct *board, piece_color player_color, Position src_position, Position dst_position);
 int is_pattern_valid_king(board_struct *board, piece_color player_color, Position src_position, Position dst_position);
 
-int has_valid_moves(board_struct *board, piece_color player_color);
-int has_valid_moves_pawn(board_struct *board, piece_color player_color, Position src_position);
-int has_valid_moves_rook(board_struct *board, piece_color player_color, Position src_position);
-int has_valid_moves_bishop(board_struct *board, piece_color player_color, Position src_position);
-int has_valid_moves_knight(board_struct *board, piece_color player_color, Position src_position);
-int has_valid_moves_queen(board_struct *board, piece_color player_color, Position src_position);
-int has_valid_moves_king(board_struct *board, piece_color player_color, Position src_position);
 
-void move_piece(board_struct *board, Position src_position, Position dst_position);
-int is_move_safe(board_struct *board, piece_color player_color, Position src_position, Position dst_position);
-int is_in_check(board_struct *board, piece_color color);
-int is_stalemate(board_struct *board, piece_color color);
