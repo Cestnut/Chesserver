@@ -296,7 +296,7 @@ int is_pattern_valid_pawn(board_struct *board, piece_color player_color, Positio
         }
         else return FALSE;
     }
-    else if(dst_position.row == src_position.row+(2*step) && src_piece->moved_flag == 0 && dst_piece->type==NO_TYPE){
+    else if(src_position.col == dst_position.col && dst_position.row == src_position.row+(2*step) && src_piece->moved_flag == 0 && board->board[dst_position.col][src_position.row+step]->type==NO_TYPE && dst_piece->type==NO_TYPE){
         return TRUE;
     }
     else{
