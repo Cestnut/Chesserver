@@ -2,6 +2,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <stdio.h>
+#include "../common/chess.h"
 #include "../common/common.h"
 #include "../common/uthash.h"
 
@@ -9,6 +10,7 @@ typedef struct player{
     char *token;
     int timer;
     int socket_fd;
+    piece_color player_color;
     struct player *next_player;
 } player;
 

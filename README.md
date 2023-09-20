@@ -172,22 +172,22 @@ I controlli sullo scacco vanno effettuati quindi in due casi:
 
 Le nuove strutture dati e funzioni sarebbero
 
-typedef struct Point{
+typedef struct Position{
     int row, col;
-} Point;
+} Position;
 
 //Ritorna una lista di punti destinazione in cui il pezzo a src_point può andare
-Point *valid_moves(board *board, piece_color player_color, Point src_point);
+Position *valid_moves(board *board, piece_color player_color, Position src_point);
 
 //Ritorna TRUE o FALSE, se il pezzo in posizione src_point può andare in posizione dst_point
 //Per non duplicare tutte le funzioni e dato che non costa molto, viene chiamato valid_moves() su src_point
 //e si controlla se dst_point è dentro la lista ritornata
-int is_move_valid(board *board, piece_color player_color, Point src_point, Point dst_point);
+int is_move_valid(board *board, piece_color player_color, Position src_point, Position dst_point);
 
 //Controlla se il giocatore player_color è sotto scacco.
 //Iterando tutti i pezzi della scacchiera, controllo se appartengono all'avversario e in caso se possono raggiungere il re del giocatore
 
-int is_in_check(board *board, piece_color player_color, Point king_position);
+int is_in_check(board *board, piece_color player_color, Position king_position);
 
 //Controlla se esistono mosse valide per il giocatore. Vengono iterati tutti i suoi pezzi sulla scacchiera e per ognuno di essi viene chiamato valid_moves() se la lista non è vuota si ritorna TRUE, altrimenti alla fine si ritorna FALSE. Non dovrebbe costare molto dato che è difficile che solo pochi dei pezzi del giocatore abbiano poche mosse
 int exists_valid_move(board *board, piece_color player_color);

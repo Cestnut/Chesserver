@@ -1,4 +1,5 @@
-#include "../common/chess.h"
+#include "../server/game_handling.h"
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -19,7 +20,7 @@ int parse_row(char letter){
     return parse("12345678", 8, letter);
 }
 
-Point *parse_move(Point *points, char *move_string){
+Position *parse_move(Position *points, char *move_string){
     int parsed_letter;
     char *token;
 
@@ -51,15 +52,37 @@ Point *parse_move(Point *points, char *move_string){
     return points;
 }
 
+player *init_players(int timer){
+    player *player1, *player2;
+    player1 = malloc(sizeof(player));
+    player2 = malloc(sizeof(player2));
+
+    player1->player_color = WHITE;
+    player1->timer = timer;
+    player1->next_player = player2;
+
+    player1->player_color = BLACK;
+    player1->timer = timer;
+    player1->next_player = player1;
+
+    return player1;
+}
+
+void print_timer(){
+    int timer = 100;
+    
+}
+
 int main(){
 
     char input[10];
-
-
+    player *curr_player = init_players(60);
     board_struct *board = init_board();
+    
     render_board(board);
     piece_color color = WHITE;
-    Point *points = malloc(sizeof(Point)*2);
+    
+    Position *points = malloc(sizeof(Position)*2);
     while(TRUE){
         fgets(input, sizeof(input), stdin);
         if(parse_move(points, input) == NULL){
@@ -67,16 +90,16 @@ int main(){
         }
         else{
             printf("%d%d to %d%d\n", points[0].col, points[0].row, points[1].col, points[1].row);
-            if(is_move_valid(board, color, points[0].col, points[0].row, points[1].col, points[1].row)){
+            if(is_move_valid(board, curr_player->player_color, points[0], points[1])){
                 render_board(board);
-            if(color == WHITE) color = BLACK;
-            else color = WHITE;
+                curr_player = curr_player->next_player;
             }
             else{
                 printf("Mossa invalida\n");
             }
         }
-        
+        printf("%d\r", curr_player->timer);
+        sleep(1);
+        curr_player->timer -= 1;
     }
-    free(points);
 }
