@@ -55,22 +55,22 @@ Position *parse_move(Position *points, char *move_string){
 player *init_players(int timer){
     player *player1, *player2;
     player1 = malloc(sizeof(player));
-    player2 = malloc(sizeof(player2));
+    player2 = malloc(sizeof(player));
 
     player1->player_color = WHITE;
     player1->timer = timer;
     player1->next_player = player2;
 
-    player1->player_color = BLACK;
-    player1->timer = timer;
-    player1->next_player = player1;
+    player2->player_color = BLACK;
+    player2->timer = timer;
+    player2->next_player = player1;
 
     return player1;
 }
 
 void print_timer(){
     int timer = 100;
-    
+
 }
 
 int main(){
@@ -91,6 +91,7 @@ int main(){
         else{
             printf("%d%d to %d%d\n", points[0].col, points[0].row, points[1].col, points[1].row);
             if(is_move_valid(board, curr_player->player_color, points[0], points[1])){
+                move_piece(board, points[0], points[1]);
                 render_board(board);
                 curr_player = curr_player->next_player;
             }
@@ -98,8 +99,5 @@ int main(){
                 printf("Mossa invalida\n");
             }
         }
-        printf("%d\r", curr_player->timer);
-        sleep(1);
-        curr_player->timer -= 1;
     }
 }
