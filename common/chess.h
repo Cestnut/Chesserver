@@ -47,6 +47,7 @@ int has_valid_moves_knight(board_struct *board, piece_color player_color, Positi
 int has_valid_moves_queen(board_struct *board, piece_color player_color, Position src_position);
 int has_valid_moves_king(board_struct *board, piece_color player_color, Position src_position);
 
-
+void move_piece(board_struct *board, Position src_position, Position dst_position);
+int is_move_safe(board_struct *board, piece_color player_color, Position src_position, Position dst_position);
 int is_in_check(board_struct *board, piece_color color);
 int is_stalemate(board_struct *board, piece_color color);
