@@ -40,6 +40,7 @@ int is_pattern_valid_knight(board_struct *board, piece_color player_color, Posit
 int is_pattern_valid_queen(board_struct *board, piece_color player_color, Position src_position, Position dst_position);
 int is_pattern_valid_king(board_struct *board, piece_color player_color, Position src_position, Position dst_position);
 
+int has_valid_moves(board_struct *board, piece_color player_color);
 int has_valid_moves_pawn(board_struct *board, piece_color player_color, Position src_position);
 int has_valid_moves_rook(board_struct *board, piece_color player_color, Position src_position);
 int has_valid_moves_bishop(board_struct *board, piece_color player_color, Position src_position);

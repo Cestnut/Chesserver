@@ -154,12 +154,10 @@ void move_piece(board_struct *board, Position src_position, Position dst_positio
 }
 
 int is_move_valid(board_struct *board, piece_color player_color, Position src_position, Position dst_position){
-    piece_struct tmp_piece, *moving_piece;
     if(is_pattern_valid(board, player_color, src_position, dst_position) && is_move_safe(board, player_color, src_position, dst_position)){
             return TRUE;
     }
     else{
-        if(DEBUG) printf("Invalid pattern\n");
         return FALSE;
     }
 }
@@ -187,6 +185,27 @@ int is_in_check(board_struct *board, piece_color player_color){
     return FALSE;
 
 }
+
+int has_valid_moves(board_struct *board, piece_color player_color){
+    Position src_position, dst_position;
+    for(int src_col=0; src_col < BOARD_SIZE; src_col++){
+        src_position.col = src_col;
+        for(int src_row=0; src_row < BOARD_SIZE; src_row++){
+            src_position.row = src_row;
+            for(int dst_col=0; dst_col < BOARD_SIZE; dst_col++){
+                dst_position.col = dst_col;
+                for(int dst_row=0; dst_row < BOARD_SIZE; dst_row++){
+                    dst_position.row = dst_row;
+                    if(is_move_valid(board, player_color, src_position, dst_position)){
+                        return TRUE;
+                    }
+                }
+            }
+        }
+    }
+    return FALSE;
+}
+
 
 int is_pattern_valid(board_struct *board, piece_color player_color, Position src_position, Position dst_position){
     piece_struct *src_piece = board->board[src_position.col][src_position.row];

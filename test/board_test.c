@@ -84,6 +84,16 @@ int main(){
     
     Position *points = malloc(sizeof(Position)*2);
     while(TRUE){
+        if(!has_valid_moves(board, curr_player->player_color)){
+            if(is_in_check(board, curr_player->player_color)){
+                printf("Checkmate\n");
+            }
+            else{
+                printf("Stalemate\n");
+            }
+            break;
+        }
+
         fgets(input, sizeof(input), stdin);
         if(parse_move(points, input) == NULL){
             printf("Invalid input\n");
