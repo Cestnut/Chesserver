@@ -6,10 +6,11 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <netdb.h>
-#define PORT 5555
 #define h_addr h_addr_list[0]
-#define BUFFER_LEN 1024
 #include "../common/common.h"
+#include "client_conf.h"
+#include "../common/common_conf.h"
+
 
 int connect_to_server(char* hostname, int port);
 void send_token(int client_fd);

@@ -8,10 +8,8 @@
 #include <time.h>
 #include <poll.h>
 #include "game_handling.h"
-
-
-#define PORT 5555
-#define BUFFER_LEN 1024
+#include "server_conf.h"
+#include "../common/common_conf.h"
 
 //Funzione per creare la server socket che riceve le connessioni
 int create_server_socket(int port);

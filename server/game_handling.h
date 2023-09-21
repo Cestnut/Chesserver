@@ -5,7 +5,8 @@
 #include "../common/chess.h"
 #include "../common/common.h"
 #include "../common/uthash.h"
-
+#include "../common/common_conf.h"
+#include "server_conf.h"
 typedef struct player{
     char *token;
     int timer;
