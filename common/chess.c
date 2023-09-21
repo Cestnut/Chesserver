@@ -1,5 +1,6 @@
 #include "chess.h"
 #include "common.h"
+#define DEBUG TRUE
 
 board_struct *init_board(){
 
@@ -169,6 +170,26 @@ void move_piece(board_struct *board, Position src_position, Position dst_positio
         else if(dst_piece->color == BLACK) last_row = 0;
 
         if(dst_position.row == last_row) dst_piece->type = QUEEN;
+    }
+    else if(dst_piece->type == KING){
+        int col_variation = dst_position.col - src_position.col;
+        Position rook_src, rook_dst;
+        if(col_variation == +2){
+            rook_src.col = 7;
+            rook_src.row = src_position.row;
+
+            rook_dst.col = dst_position.col - 1;
+            rook_dst.row = src_position.row;
+            move_piece(board, rook_src, rook_dst);
+        }
+        else if(col_variation == -2){
+            rook_src.col = 0;
+            rook_src.row = src_position.row;
+            
+            rook_dst.col = dst_position.col + 1;
+            rook_dst.row = src_position.row;
+            move_piece(board, rook_src, rook_dst);
+        }
     }
 }
 
@@ -391,6 +412,39 @@ int is_pattern_valid_king(board_struct *board, piece_color player_color, Positio
     row_variation = dst_position.row - src_position.row;
     col_variation = dst_position.col - src_position.col;
 
+    //If movement is in adjacent cells
+    //else if movement is horizontal by 2, check castling conditions
     if(row_variation>=-1 && row_variation <=1 && col_variation>= -1 && col_variation <= 1) return TRUE;
+    else if(row_variation==0 && (col_variation == 2 || col_variation == -2)){
+        piece_struct *rook, *king;
+        Position tmp_position = src_position;
+        king = board->board[src_position.col][src_position.row];
+        
+        //King can't castle if its under check
+        if(is_in_check(board, player_color)) return FALSE;
+        else if(col_variation == 2){
+            rook = board->board[7][src_position.row];
+            tmp_position.col += 1; //Column of the square the king passes through 
+
+            //King and rook should never have been moved
+            if(rook->moved_flag || king->moved_flag) return FALSE;
+            //Path has to be clear
+            else if(board->board[tmp_position.col][tmp_position.row]->type != NO_TYPE) return FALSE;
+            //The square the king passes through has to be safe
+            else if(!is_move_safe(board, player_color, src_position,tmp_position)) return FALSE;
+            else return TRUE;
+
+        }
+        else if(col_variation == -2){
+            rook = board->board[0][src_position.row];
+            tmp_position.col -= 1; 
+            if(rook->moved_flag || king->moved_flag) return FALSE;
+            else if(board->board[tmp_position.col][tmp_position.row]->type != NO_TYPE) return FALSE;
+            else if(!is_move_safe(board, player_color, src_position,tmp_position)) return FALSE;
+            //For movement to the left an additional square has to be empty since the path is longer
+            else if(board->board[tmp_position.col - 2][tmp_position.row]->type != NO_TYPE) return FALSE;
+            else return TRUE;
+        }
+    }
     else return FALSE;
 }
