@@ -1,3 +1,4 @@
+.PHONY: all client server
 all: client server
 
 CC=gcc
