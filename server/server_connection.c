@@ -161,7 +161,7 @@ error join_game(int client_fd, char *game_name, char *token){
 
         if(DEBUG) printf("Game full, but token %s is validated\n", token);
     }
-    else if(game->match_data->connected_players < game->match_data->max_players){
+    else if(game->match_data->connected_players < MAX_PLAYERS){
         player* new_player = malloc(sizeof(player));
         new_player->socket_fd = client_fd;
         new_player->timer = game->match_data->timer_length;

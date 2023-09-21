@@ -20,8 +20,7 @@ typedef struct match_data{
     player *players;
     unsigned int timer_length;
 
-    //usati per controllare se la lobby e piena e aggiungere nuovi giocatori
-    unsigned short int max_players;
+    //usato per controllare se la lobby e piena e aggiungere nuovi giocatori
     unsigned short int connected_players;
 } match_data;
 

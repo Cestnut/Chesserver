@@ -20,7 +20,6 @@ error insert_game(char *name, unsigned int timer_length){
         match_data* data = malloc(sizeof(match_data));
         data->players = NULL;
         data->timer_length = timer_length;
-        data->max_players = MAX_PLAYERS;
         data->connected_players = 0;
         game_entry->match_data = data;
 
@@ -63,12 +62,12 @@ void delete_game(char *name){
 
 void *run_game(void *args){
     game* current_game = (game*)args;
-    player *curr = current_game->match_data->players;
+    player *current_player = current_game->match_data->players;
 
     //Iterates until game room is full
-    while(current_game->match_data->connected_players < current_game->match_data->max_players){
+    while(current_game->match_data->connected_players < MAX_PLAYERS){
         if (DEBUG) printf("There are %d players out of %d in the game. Waiting...\n",   current_game->match_data->connected_players, 
-                                                                                        current_game->match_data->max_players);        
+                                                                                        MAX_PLAYERS);        
         pthread_cond_wait(&current_game->new_player_cond, &current_game->new_player_mutex);
     }
     
@@ -76,13 +75,24 @@ void *run_game(void *args){
         printf("Game room %s is full\n", current_game->name);
     }
 
+    //Randomizes who's the first player
+    if(rand()%2){
+        current_player->player_color = WHITE;
+        current_player->next_player->player_color = BLACK;
+    }
+    else{
+        current_player = current_player->next_player;
+        current_player->player_color = WHITE;
+        current_player->next_player->player_color = BLACK;
+    }
+
     //Connects the last player to the first, making the linked list circular
-    while(curr->next_player != NULL) curr = curr->next_player;
-    curr->next_player = current_game->match_data->players;     
+    while(current_player->next_player != NULL) current_player = current_player->next_player;
+    current_player->next_player = current_game->match_data->players;     
 
     while(1){
-        printf("%d\n", curr->socket_fd);
-        curr = curr->next_player;
+        printf("%d\n", current_player->socket_fd);
+        current_player = current_player->next_player;
         sleep(2);
     }
 }
