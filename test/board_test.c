@@ -3,55 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-int parse(char *charset, int charset_len, char letter){
-    for(int i=0; i<charset_len; i++){
-        if(toupper(charset[i]) == toupper(letter)){
-            return i;
-        }
-    }
-    return -1;
-}
-
-int parse_column(char letter){
-    return parse("ABCDEFGH", 8, letter);
-}
-
-int parse_row(char letter){
-    return parse("12345678", 8, letter);
-}
-
-Position *parse_move(Position *points, char *move_string){
-    int parsed_letter;
-    char *token;
-
-    //PARSE FIRST POINT
-    token = strtok(move_string, "-");
-    if(token==NULL) return NULL;
-
-    parsed_letter = parse_column(token[0]);
-    if(parsed_letter == -1) return NULL;
-    points[0].col = parsed_letter;
-    
-    parsed_letter = parse_row(token[1]);
-    if(parsed_letter == -1) return NULL;
-    points[0].row = parsed_letter;
-    
-    //PARSE SECOND POINT
-    token = strtok(NULL, "");
-    if(token==NULL) return NULL;
-
-    parsed_letter = parse_column(token[0]);
-    if(parsed_letter == -1) return NULL;
-    points[1].col = parsed_letter;
-    
-    parsed_letter = parse_row(token[1]);
-    if(parsed_letter == -1) return NULL;
-    points[1].row = parsed_letter;
-
-
-    return points;
-}
-
 player *init_players(int timer){
     player *player1, *player2;
     player1 = malloc(sizeof(player));

@@ -2,6 +2,10 @@
 #include "common.h"
 #define DEBUG TRUE
 
+int parse(char *charset, int charset_len, char letter);
+int parse_column(char letter);
+int parse_row(char letter);
+
 board_struct *init_board(){
 
     char clean_board[BOARD_SIZE][BOARD_SIZE][3] = { 
@@ -99,8 +103,8 @@ void render_board(board_struct *board, piece_color player_color){
     }
 
     char columns[BOARD_SIZE];
-    if(player_color == BLACK) strncpy(columns, "HGFEDCBA", 8);
-    else if(player_color == WHITE) strncpy(columns, "ABCDEFGH", 8);
+    if(player_color == BLACK) memcpy(columns, "HGFEDCBA", BOARD_SIZE);
+    else if(player_color == WHITE) memcpy(columns, "ABCDEFGH", BOARD_SIZE);
     printf("  ");
     for(int i=0; i<sizeof(columns); i++){
         printf("%3c ", columns[i]);
@@ -111,16 +115,21 @@ void render_board(board_struct *board, piece_color player_color){
 Position get_king_position(board_struct *board, piece_color player_color){
     piece_struct *piece;
     Position point;
+    int found;
     for(int row=0; row<BOARD_SIZE; row++){
         for(int col=0; col<BOARD_SIZE; col++){
             piece = board->board[col][row];
             if(piece->color == player_color && piece->type == KING){
                 point.col = col;
                 point.row = row;
-                return point;
+                found = TRUE;
+                break;
             }
         }
+        if(found) break;
     }
+
+    return point;
 }
 
 //If the move would lead to being in check
@@ -251,10 +260,6 @@ int has_valid_moves(board_struct *board, piece_color player_color){
 int is_pattern_valid(board_struct *board, piece_color player_color, Position src_position, Position dst_position){
     piece_struct *src_piece = board->board[src_position.col][src_position.row];
     piece_struct *dst_piece = board->board[dst_position.col][dst_position.row];
-    
-    piece_color opponent_color;
-    if(player_color == WHITE) opponent_color=BLACK;
-    else if(player_color == BLACK) opponent_color=WHITE;
 
     //if destination is outside board
     if(dst_position.col >= BOARD_SIZE || dst_position.row >= BOARD_SIZE || dst_position.col < 0 || dst_position.row < 0) return FALSE;
@@ -287,8 +292,10 @@ int is_pattern_valid(board_struct *board, piece_color player_color, Position src
         case QUEEN:
             return is_pattern_valid_queen(board, player_color, src_position, dst_position);
             break;
+        default:
+            return FALSE;
+            break;
     }
-
 }
 
 
@@ -447,4 +454,55 @@ int is_pattern_valid_king(board_struct *board, piece_color player_color, Positio
         }
     }
     else return FALSE;
+
+    return FALSE;
+}
+
+int parse(char *charset, int charset_len, char letter){
+    for(int i=0; i<charset_len; i++){
+        if(toupper(charset[i]) == toupper(letter)){
+            return i;
+        }
+    }
+    return -1;
+}
+
+int parse_column(char letter){
+    return parse("ABCDEFGH", 8, letter);
+}
+
+int parse_row(char letter){
+    return parse("12345678", 8, letter);
+}
+
+Position *parse_move(Position *points, char *move_string){
+    int parsed_letter;
+    char *token;
+
+    //PARSE FIRST POINT
+    token = strtok(move_string, "-");
+    if(token==NULL) return NULL;
+
+    parsed_letter = parse_column(token[0]);
+    if(parsed_letter == -1) return NULL;
+    points[0].col = parsed_letter;
+    
+    parsed_letter = parse_row(token[1]);
+    if(parsed_letter == -1) return NULL;
+    points[0].row = parsed_letter;
+    
+    //PARSE SECOND POINT
+    token = strtok(NULL, "");
+    if(token==NULL) return NULL;
+
+    parsed_letter = parse_column(token[0]);
+    if(parsed_letter == -1) return NULL;
+    points[1].col = parsed_letter;
+    
+    parsed_letter = parse_row(token[1]);
+    if(parsed_letter == -1) return NULL;
+    points[1].row = parsed_letter;
+
+
+    return points;
 }

@@ -23,6 +23,8 @@ typedef struct board{
     piece_struct *board[BOARD_SIZE][BOARD_SIZE];
 } board_struct;
 
+Position *parse_move(Position *points, char *move_string);
+
 board_struct *init_board();
 void render_board(board_struct *board, piece_color player_color);
 
