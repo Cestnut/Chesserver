@@ -205,3 +205,12 @@ Mossa valida:
     - Il pezzo può spostarsi
     - La mossa non metterebbe il giocatore sottoscacco
 
+
+
+### Scambio messaggi per la partita:
+server->client - Inizio partita contente il colore del giocatore
+
+client->server - Contenente la mossa che si vuole fare
+server->client - Contente la mossa fatta dal giocatore
+
+server->client - nuovo stato partita
