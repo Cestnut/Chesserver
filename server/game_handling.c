@@ -75,6 +75,10 @@ void *run_game(void *args){
         printf("Game room %s is full\n", current_game->name);
     }
 
+    //Connects the last player to the first, making the linked list circular
+    while(current_player->next_player != NULL) current_player = current_player->next_player;
+    current_player->next_player = current_game->match_data->players;     
+
     //Randomizes who's the first player
     if(rand()%2){
         current_player->player_color = WHITE;
@@ -86,9 +90,6 @@ void *run_game(void *args){
         current_player->next_player->player_color = BLACK;
     }
 
-    //Connects the last player to the first, making the linked list circular
-    while(current_player->next_player != NULL) current_player = current_player->next_player;
-    current_player->next_player = current_game->match_data->players;     
 
     while(1){
         printf("%d\n", current_player->socket_fd);
