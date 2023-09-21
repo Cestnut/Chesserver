@@ -2,6 +2,8 @@
 
 games_struct *games;
 
+void clean_game(game *game);
+
 void init_games(){
     games = malloc(sizeof(games_struct));
     games->hashmap = NULL;
@@ -52,6 +54,7 @@ void delete_game(char *name){
     pthread_rwlock_wrlock(&games->rwlock);
     game* game_entry = get_game(name);
     if(game_entry) {
+        clean_game(game_entry);
         free(game_entry->match_data);
         HASH_DEL(games->hashmap, game_entry);
         free(game_entry);
@@ -59,6 +62,14 @@ void delete_game(char *name){
     pthread_rwlock_unlock(&games->rwlock);
 }
 
+void clean_game(game *game){
+    match_data *data = game->match_data;
+
+    player *curr_player = data->players;
+    board_struct *board = data->board;
+
+    //TODO
+}
 
 void *run_game(void *args){
     game* current_game = (game*)args;
@@ -90,10 +101,67 @@ void *run_game(void *args){
         current_player->next_player->player_color = BLACK;
     }
 
-
-    while(1){
-        printf("%d\n", current_player->socket_fd);
+    //Communicate to each player their color
+    for(int i=0; i<current_game->match_data->connected_players; i++){
+        send(current_player->socket_fd, &current_player->player_color, sizeof(piece_color), 0);
         current_player = current_player->next_player;
-        sleep(2);
     }
+
+    char input_buffer[BUFFER_LEN];
+    Position *positions = malloc(sizeof(Position)*2);
+    int error;
+    move_validation_result server_response_move;
+    game_status status = RUNNING;
+
+    board_struct *board = init_board();
+    current_game->match_data->board = board;
+    while(status == RUNNING){
+        error=1;
+        if (DEBUG) printf("Game running\n");
+        while(error){
+            //Receive move
+            if(DEBUG) printf("Waiting for move: %s");
+            recv(current_player->socket_fd, input_buffer, sizeof(input_buffer), 0);
+            if(DEBUG) printf("Received move: %s", input_buffer);
+            //Validate and make move
+            if(parse_move(positions, input_buffer) == NULL){
+                if (DEBUG) printf("Invalid input\n");
+                server_response_move = INVALID_MOVE;
+            }
+            else if(!is_move_valid(board, current_player->player_color, positions[0], positions[1])){
+                if (DEBUG) printf("Invalid move\n");
+                server_response_move = INVALID_MOVE;
+            }
+            else{
+                move_piece(board, positions[0], positions[1]);
+                server_response_move = VALID_MOVE;
+                error = 0;
+            }
+            send(current_player->socket_fd, &server_response_move, sizeof(move_validation_result), 0);
+        }
+
+        //Changes player here, because the next messages will be sent to him.
+        current_player = current_player->next_player;
+
+
+        //Send move
+        send(current_player->socket_fd, input_buffer, strlen(input_buffer), 0);
+
+        //Sets new game status and sends it to each player
+        if(!has_valid_moves(board, current_player->player_color)){
+            if(is_in_check(board, current_player->player_color)){
+                status = CHECKMATE;
+            }
+            else{
+                status = CHECKMATE;
+            }
+        }
+        for(int i=0; i<current_game->match_data->connected_players; i++){
+            send(current_player->socket_fd, &status, sizeof(game_status), 0);
+            current_player = current_player->next_player;
+        }
+    }
+
+    clean_game(current_game);
+    return NULL;
 }

@@ -140,11 +140,12 @@ error join_game(int client_fd){
 void game_menu(int client_fd){
     char input_buffer[GAME_NAME_MAX_LENGTH];
     char player_color_str[10];
-    Position positions[2];
+    Position *positions = malloc(sizeof(Position)*2);
     piece_color player_color, curr_color=WHITE;
     game_status status = RUNNING;
     board_struct *board;
     move_validation_result server_response_move;
+    int error;
 
     printf("Waiting for game to begin\n");
     recv(client_fd, &player_color, sizeof(player_color), 0);
@@ -159,10 +160,11 @@ void game_menu(int client_fd){
 
     printf("The game has begun! You're %s\n", player_color_str);
     while(status == RUNNING){
+        error = 1;
         render_board(board, player_color);
         if(curr_color == player_color){
             printf("It's your turn!\n");
-            while(TRUE){
+            while(error){
                 fgets(input_buffer, sizeof(input_buffer), stdin);
                 if(parse_move(positions, input_buffer) == NULL){
                     printf("Invalid input\n");
@@ -174,10 +176,11 @@ void game_menu(int client_fd){
                     //Sends the move and waits for feedback
                     send(client_fd, input_buffer, strlen(input_buffer), 0);
                     recv(client_fd, &server_response_move, sizeof(server_response_move), 0);
-                    if(server_response_move == VALID_MOVE){
+                    if(server_response_move == INVALID_MOVE) printf("Invalid move\n");
+                    else{
                         printf("%d%d to %d%d\n", positions[0].col, positions[0].row, positions[1].col, positions[1].row);
                         move_piece(board, positions[0], positions[1]);
-                        break;
+                        error = 0;
                     }
                 }
             }   
