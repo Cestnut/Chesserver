@@ -4,6 +4,7 @@
 
 error create_game(int client_fd);
 error join_game(int client_fd);
+void game_menu();
 
 int main(int argc, char **argv){
 
@@ -12,11 +13,11 @@ int main(int argc, char **argv){
     int port, error_flag;
 
     //Parses hostname and port number from user input
+    char *token;
     do{
         error_flag = 0;
         puts("Benvenuto a Chesserver! Scrivi l'indirizzo del server nella forma <HOSTNAME>:<PORTA>\n");
         fgets(server_addr, sizeof(server_addr), stdin);
-        char *token;
         token = strtok(server_addr, ":");
         hostname = token;
         
@@ -28,26 +29,26 @@ int main(int argc, char **argv){
         else{
             port = atoi(token);
         }
+
+        for(int attempt=1; attempt<=MAX_CONNECTION_ATTEMPTS && error_flag == 0;attempt++){   
+            client_fd = connect_to_server(hostname, port);        
+            if(client_fd != -1){
+                printf("Connected succesfully\n");
+                break;
+            }
+
+            if(attempt == MAX_CONNECTION_ATTEMPTS){
+                printf("Couldn't connect to server.\n");
+                error_flag = 1;
+                break;
+            }
+
+            printf("Could not connect to server. Retrying.\n");
+            sleep(1);
+        }
+
     }while(error_flag);
     
-    int max_attempts = 3, attempt = 1;
-    while(1){   
-        client_fd = connect_to_server(hostname, port);        
-        if(client_fd != -1){
-            printf("Connected succesfully\n");
-            break;
-        }
-
-        if(attempt == max_attempts){
-            printf("Couldn't connect to server. Exiting process.");
-            exit(0);
-        }
-
-        printf("Could not connect to server. Retrying.\n");
-        attempt++;
-        sleep(1);
-    }
-        
     char input[10];
     client_choice choice;
     char command_prompt[] = "Insert a command:\n"
@@ -69,6 +70,7 @@ int main(int argc, char **argv){
                 error_code = create_game(client_fd);
                 if(error_code==NO_ERROR){
                     printf("Game created and joined\n");
+                    game_menu();
                 }
                 break;
                     
@@ -76,6 +78,7 @@ int main(int argc, char **argv){
                 error_code = join_game(client_fd);
                 if(error_code==NO_ERROR){
                     printf("Game joined\n");
+                    game_menu();
                 }
                 break;
 
@@ -131,4 +134,8 @@ error join_game(int client_fd){
 
     recv(client_fd, &error_code, sizeof(error_code), 0);
     return error_code;
+}
+
+void game_menu(){
+
 }
