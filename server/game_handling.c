@@ -66,10 +66,25 @@ void delete_game(char *name){
 void clean_game(game *game){
     match_data *data = game->match_data;
 
-    player *curr_player = data->players;
+    player *curr_player = data->players, *tmp_player;
     board_struct *board = data->board;
+    
+    for(int col=0; col<BOARD_SIZE; col++){
+        for(int row=0; row<BOARD_SIZE; row++){
+            free(board->board[col][row]);
+        }
+    }
+    free(board);
 
-    //TODO
+    for(int i=0; i<data->connected_players; i++){
+        tmp_player = curr_player;
+        curr_player = curr_player->next_player;
+        free(tmp_player);
+    }
+    free(data);
+
+    fclose(game->log_file);
+    free(game);
 }
 
 void *run_game(void *args){
@@ -154,7 +169,7 @@ void *run_game(void *args){
         //Sets new game status and sends it to each player
         if(!has_valid_moves(board, current_player->player_color)){
             if(is_in_check(board, current_player->player_color)){
-                if (DEBUG) printf("Checkamte\n");
+                if (DEBUG) printf("Checkmate\n");
                 status = CHECKMATE;
             }
             else{
