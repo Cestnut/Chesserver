@@ -1,6 +1,6 @@
 #include "../common/common.h"
 #include "../common/chess.h"
-
+#include "server_conf.h"
 
 FILE *create_game_log(char *game_name);
 void log_move(FILE *log_file, char *move, piece_color player_color);

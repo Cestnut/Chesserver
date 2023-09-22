@@ -15,8 +15,11 @@ FILE *create_game_log(char *name) {
     
     // Create directory path "/var/log/ELO/games"
     char directory_path[256];
+    sprintf(directory_path, "/var/log/ELO");
+    if(mkdir(directory_path, 0755)) perror("mkdir: "); // Create directory with permissions 0755 (rwxr-xr-x)
     sprintf(directory_path, "/var/log/ELO/games");
-    if(mkdir(directory_path, 0755)) perror(mkdir); // Create directory with permissions 0755 (rwxr-xr-x)
+    if(mkdir(directory_path, 0755)) perror("mkdir: "); // Create directory with permissions 0755 (rwxr-xr-x)
+
 
     // Get current time
     time_t t = time(NULL);
@@ -32,8 +35,11 @@ FILE *create_game_log(char *name) {
 
     // Open the file
     FILE *file = fopen(file_name, "w");
-    if(file != NULL) printf("Succesfully created file %s\n", file_name);
-    else printf("Error creating file %s\n", file_name);
+    
+    if(DEBUG){
+        if(file != NULL) printf("Succesfully created file %s\n", file_name);
+        else printf("Error creating file %s\n", file_name);
+    }
 
     return file;
 }
@@ -43,8 +49,12 @@ void log_move(FILE *log_file, char *move, piece_color player_color){
         char new_move[10];
         if(player_color == WHITE) sprintf(new_move, "%s", move);
         else sprintf(new_move, " %s\n", move);
-    
+        if(DEBUG) printf("Writing move %s to file\n", new_move);
         fprintf(log_file,"%s",new_move);
+        fflush(log_file);
+    }
+    else{
+        if(DEBUG) printf("File handler is NULL\n");
     }
 }
 
@@ -52,10 +62,15 @@ void log_end(FILE *log_file, game_status status, piece_color winner){
     if(log_file != NULL){
         char winner_str[10];
         if(status == CHECKMATE){
-            if(winner == WHITE) sprintf(winner_str, "%s", "WHITE");
-            else if(winner == BLACK) sprintf(winner_str, "%s", "BLACK");
-            fprintf(log_file,"CHECKMATE %s",winner_str);
+            if(winner == WHITE) sprintf(winner_str, "%s", "BLACK");
+            else if(winner == BLACK) sprintf(winner_str, "%s", "WHITE");
+            fprintf(log_file,"CHECKMATE %s WON",winner_str);
+            fflush(log_file);
             }
         else if(status == STALEMATE) fprintf(log_file, "%s", "STALEMATE");
+        if(DEBUG) printf("Writing ending to file\n");
+    }
+    else{
+        if(DEBUG) printf("File handler is NULL\n");
     }
 }
