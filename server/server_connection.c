@@ -1,7 +1,7 @@
 #include "server_connection.h"
 
-error join_game(int client_fd, char *game_name, char *token);
-error create_game(int client_fd, char *client_token, char *game_name, unsigned int timer_length);
+error join_game(int client_fd, char *game_name);
+error create_game(int client_fd, char *game_name, unsigned int timer_length);
 int validate_token(char *game_name, char *token);
 
 
@@ -64,8 +64,6 @@ void *client_worker(void *args){
     ssize_t bytes_read;
     error error_code = 0;
 
-    char *client_token = receive_token(client_fd);
-
     while(1){
         bytes_read = recv(client_fd, &choice, sizeof(client_choice), 0);
         if(bytes_read){
@@ -91,13 +89,13 @@ void *client_worker(void *args){
                         timer_length = strtoul(split_token,0,0);
                     }
 
-                    error_code = create_game(client_fd, client_token, game_name, timer_length);
+                    error_code = create_game(client_fd, game_name, timer_length);
                     break;
                     
                 case JOIN_GAME:
                     recvline(client_fd, game_name, sizeof(game_name), 0);
                     if(*game_name == 0) break;
-                    error_code = join_game(client_fd, game_name, client_token);
+                    error_code = join_game(client_fd, game_name);
                     break;
 
                 case EXIT:
@@ -115,7 +113,7 @@ void *client_worker(void *args){
     return NULL;
 }
 
-error create_game(int client_fd, char *client_token, char *game_name, unsigned int timer_length){
+error create_game(int client_fd, char *game_name, unsigned int timer_length){
     error error_code;
     
     error_code = insert_game(game_name, timer_length);
@@ -125,11 +123,11 @@ error create_game(int client_fd, char *client_token, char *game_name, unsigned i
     }
     else{
         if (DEBUG) printf("Game created. Game name: %s", game_name);
-        return join_game(client_fd, game_name, client_token);
+        return join_game(client_fd, game_name);
     }
 }
 
-error join_game(int client_fd, char *game_name, char *token){
+error join_game(int client_fd, char *game_name){
     error error_code;
     game *game = get_game(game_name);
     //Checks first whether a game with the given name exists
@@ -142,27 +140,13 @@ error join_game(int client_fd, char *game_name, char *token){
     else{
         pthread_rwlock_wrlock(&game->rwlock);
 
-        //If the player is already playing, update client_fd
-        //else if the room is not full, simply add the new player
+        //if the room is not full add the new player
         //else the room is full
-        if(validate_token(game_name, token)){
-            error_code = NO_ERROR;
-            player *curr = game->match_data->players;
-            for(int i=0; i<game->match_data->connected_players; i++){
-                if(!strcmp(curr->token, token)){
-                    curr->socket_fd = client_fd;
-                }
-                curr = curr->next_player;
-            }
-
-        if(DEBUG) printf("Game full, but token %s is validated\n", token);
-        }
-        else if(game->match_data->connected_players < MAX_PLAYERS){
+        if(game->match_data->connected_players < MAX_PLAYERS){
             player* new_player = malloc(sizeof(player));
             new_player->socket_fd = client_fd;
             new_player->timer = game->match_data->timer_length;
             new_player->next_player = NULL;
-            new_player->token = token;
 
             //If game is empty, player has to be added to head, else after the last player
             if(game->match_data->connected_players == 0){
@@ -190,22 +174,4 @@ error join_game(int client_fd, char *game_name, char *token){
         pthread_rwlock_unlock(&game->rwlock);
     }
     return error_code;
-}
-
-//Given a name and a token, tells whether one of the players has the given token 
-int validate_token(char *game_name, char *token){
-    game *game_data = get_game(game_name);
-    if(game_data != NULL){
-        player *curr = game_data->match_data->players;
-        for(int i=0; i<game_data->match_data->connected_players; i++){
-            if(!strcmp(curr->token, token)){
-                if(DEBUG){
-                    printf("Token %s is validated\n", token);
-                }
-                return 1;
-            }
-            curr = curr->next_player;
-        }
-    }
-    return 0;
 }
