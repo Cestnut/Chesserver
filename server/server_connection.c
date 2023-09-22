@@ -39,20 +39,6 @@ int create_server_socket(int port){
     return server_fd;
 }
 
-char *receive_token(int client_fd){
-    char *token = malloc((TOKEN_LENGTH+1) * sizeof(char));
-    recv(client_fd, token, (TOKEN_LENGTH+1), 0);
-    if (DEBUG) printf("Received token %s of length: %lu\n", token, strlen(token));
-    if(strlen(token)!=TOKEN_LENGTH){
-        free(token);
-        token = random_string(TOKEN_LENGTH);
-        send(client_fd, token, (TOKEN_LENGTH+1), 0);
-        if(DEBUG) printf("Sent token length: %lu\n", strlen(token));        
-    }
-    return token;
-
-}
-
 void *client_worker(void *args){
     worker_args *data = (worker_args*)args;
     int client_fd = data->client_fd;
@@ -69,7 +55,7 @@ void *client_worker(void *args){
         if(bytes_read){
             switch(choice){
                 case CREATE_GAME:
-                    reclinev(client_fd, input_buffer, sizeof(input_buffer), 0);
+                    recvline(client_fd, input_buffer, sizeof(input_buffer), 0);
                     //Stops the routine if an empty string has been sent 
                     // (can happen in case the client closes the connection)
                     if(*input_buffer == 0) break;
