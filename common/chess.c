@@ -1,5 +1,6 @@
 #include "chess.h"
 #include "common.h"
+#include "common_conf.h"
 #define DEBUG TRUE
 
 int parse(char *charset, int charset_len, char letter);
@@ -134,6 +135,7 @@ Position get_king_position(board_struct *board, piece_color player_color){
 
 //If the move would lead to being in check
 int is_move_safe(board_struct *board, piece_color player_color, Position src_position, Position dst_position){
+    if (DEBUG) printf("Check if move is safe\n");
     int result;
     piece_struct tmp_piece, *moving_piece;
     //Make the move but save the piece in destination, since we may have to rollback
@@ -142,7 +144,7 @@ int is_move_safe(board_struct *board, piece_color player_color, Position src_pos
     *board->board[dst_position.col][dst_position.row] = *moving_piece;
     moving_piece->color = NO_COLOR;
     moving_piece->type = NO_TYPE;
-
+    if (DEBUG) printf("Moved piece\n");
     if(is_in_check(board, player_color)){
         result = FALSE;
     }
@@ -153,7 +155,8 @@ int is_move_safe(board_struct *board, piece_color player_color, Position src_pos
     //Rollback the movement
     *moving_piece = *board->board[dst_position.col][dst_position.row];
     *board->board[dst_position.col][dst_position.row] = tmp_piece;
-    
+    if (DEBUG) printf("Rolled back movement\n");
+
     return result;
 }
 
@@ -203,6 +206,7 @@ void move_piece(board_struct *board, Position src_position, Position dst_positio
 }
 
 int is_move_valid(board_struct *board, piece_color player_color, Position src_position, Position dst_position){
+    if (DEBUG) printf("Trying move %d%d-%d%d\n", src_position.col, src_position.row, dst_position.col, dst_position.row);
     if(is_pattern_valid(board, player_color, src_position, dst_position) && is_move_safe(board, player_color, src_position, dst_position)){
             return TRUE;
     }
@@ -212,6 +216,7 @@ int is_move_valid(board_struct *board, piece_color player_color, Position src_po
 }
 
 int is_in_check(board_struct *board, piece_color player_color){
+    if (DEBUG) printf("Is in check\n");
     piece_color opponent_color;
     piece_struct *piece;
     Position king_position = get_king_position(board, player_color), src_position;
@@ -260,7 +265,7 @@ int has_valid_moves(board_struct *board, piece_color player_color){
 int is_pattern_valid(board_struct *board, piece_color player_color, Position src_position, Position dst_position){
     piece_struct *src_piece = board->board[src_position.col][src_position.row];
     piece_struct *dst_piece = board->board[dst_position.col][dst_position.row];
-
+    if (DEBUG) printf("Validating pattern\n");
     //if destination is outside board
     if(dst_position.col >= BOARD_SIZE || dst_position.row >= BOARD_SIZE || dst_position.col < 0 || dst_position.row < 0) return FALSE;
 
@@ -302,7 +307,6 @@ int is_pattern_valid(board_struct *board, piece_color player_color, Position src
 int is_pattern_valid_pawn(board_struct *board, piece_color player_color, Position src_position, Position dst_position){
     piece_struct *src_piece = board->board[src_position.col][src_position.row];
     piece_struct *dst_piece = board->board[dst_position.col][dst_position.row];    
-    
     piece_color opponent_color;
     if(player_color == WHITE) opponent_color=BLACK;
     else if(player_color == BLACK) opponent_color=WHITE;
@@ -477,10 +481,13 @@ int parse_row(char letter){
 
 Position *parse_move(Position *points, char *move_string){
     int parsed_letter;
+    //This is done to avoid that the original string gets modified
+    char buffer_copy[BUFFER_LEN];
+    strncpy(buffer_copy, move_string, sizeof(buffer_copy));
     char *token;
 
     //PARSE FIRST POINT
-    token = strtok(move_string, "-");
+    token = strtok(buffer_copy, "-");
     if(token==NULL) return NULL;
 
     parsed_letter = parse_column(token[0]);
