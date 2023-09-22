@@ -20,6 +20,7 @@ error insert_game(char *name, unsigned int timer_length){
         game* game_entry = malloc(sizeof(game));
         strcpy(game_entry->name, name);
         match_data* data = malloc(sizeof(match_data));
+        data->board = NULL;
         data->players = NULL;
         data->timer_length = timer_length;
         data->connected_players = 0;
@@ -73,15 +74,15 @@ void clean_game(game *game){
 
 void *run_game(void *args){
     game* current_game = (game*)args;
-    player *current_player = current_game->match_data->players;
-
+    player *current_player;
     //Iterates until game room is full
     while(current_game->match_data->connected_players < MAX_PLAYERS){
         if (DEBUG) printf("There are %d players out of %d in the game. Waiting...\n",   current_game->match_data->connected_players, 
                                                                                         MAX_PLAYERS);        
         pthread_cond_wait(&current_game->new_player_cond, &current_game->new_player_mutex);
     }
-    
+
+    current_player = current_game->match_data->players;
     if(DEBUG){
         printf("Game room %s is full\n", current_game->name);
     }
@@ -120,9 +121,9 @@ void *run_game(void *args){
         if (DEBUG) printf("Game running\n");
         while(error){
             //Receive move
-            if(DEBUG) printf("Waiting for move: %s");
+            if(DEBUG) printf("Waiting for move\n");
             recv(current_player->socket_fd, input_buffer, sizeof(input_buffer), 0);
-            if(DEBUG) printf("Received move: %s", input_buffer);
+            if(DEBUG) printf("Received move: %s\n", input_buffer);
             //Validate and make move
             if(parse_move(positions, input_buffer) == NULL){
                 if (DEBUG) printf("Invalid input\n");
@@ -140,12 +141,12 @@ void *run_game(void *args){
             send(current_player->socket_fd, &server_response_move, sizeof(move_validation_result), 0);
         }
 
-        //Changes player here, because the next messages will be sent to him.
+        //Changes player here, because the next messages will be sent to them.
         current_player = current_player->next_player;
-
 
         //Send move
         send(current_player->socket_fd, input_buffer, strlen(input_buffer), 0);
+        if(DEBUG) printf("Sent move to other player\n");
 
         //Sets new game status and sends it to each player
         if(!has_valid_moves(board, current_player->player_color)){
@@ -153,13 +154,18 @@ void *run_game(void *args){
                 status = CHECKMATE;
             }
             else{
-                status = CHECKMATE;
+                status = STALEMATE;
             }
         }
+        else status = RUNNING;
+        if(DEBUG) printf("Calculated new status\n");
+
         for(int i=0; i<current_game->match_data->connected_players; i++){
             send(current_player->socket_fd, &status, sizeof(game_status), 0);
             current_player = current_player->next_player;
         }
+
+        if(DEBUG)printf("Sent new status to both players\n");
     }
 
     clean_game(current_game);
