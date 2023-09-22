@@ -221,10 +221,12 @@ void game_menu(int client_fd){
             printf("ERROR, shouldn't have left game loop\n");
             break;
         case CHECKMATE:
-            printf("Checkmate!");
+            printf("Checkmate! ");
+            if(curr_color != player_color) printf("You won :D!!\n");
+            else printf("You lost :(\n");
             break;
         case STALEMATE:
-            printf("Stalemate!");
+            printf("Stalemate!\n");
             break;
         default:
             printf("Something weird happened. Status: %d\n", status);
