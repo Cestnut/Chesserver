@@ -117,12 +117,14 @@ void *run_game(void *args){
     board_struct *board = init_board();
     current_game->match_data->board = board;
     while(status == RUNNING){
+        memset(input_buffer, 0, sizeof(input_buffer));
         error=1;
         if (DEBUG) printf("Game running\n");
         while(error){
             //Receive move
+            if(DEBUG) render_board(board, WHITE);
             if(DEBUG) printf("Waiting for move\n");
-            recv(current_player->socket_fd, input_buffer, sizeof(input_buffer), 0);
+            recvline(current_player->socket_fd, input_buffer, sizeof(input_buffer), 0);
             if(DEBUG) printf("Received move: %s\n", input_buffer);
             //Validate and make move
             if(parse_move(positions, input_buffer) == NULL){

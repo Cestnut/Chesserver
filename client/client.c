@@ -63,7 +63,7 @@ int main(int argc, char **argv){
     while(1){
         printf("%s\n", command_prompt);    
         fgets(input, sizeof(input), stdin);
-        flush_stdin();
+        //flush_stdin();
         choice = (client_choice)atoi(input);
         send(client_fd, &choice, 1, 0);
         switch(choice){
@@ -72,6 +72,7 @@ int main(int argc, char **argv){
                 if(error_code==NO_ERROR){
                     printf("Game created and joined\n");
                     game_menu(client_fd);
+                    printf("Game ended\n");
                 }
                 break;
                     
@@ -80,6 +81,7 @@ int main(int argc, char **argv){
                 if(error_code==NO_ERROR){
                     printf("Game joined\n");
                     game_menu(client_fd);
+                    printf("Game ended\n");
                 }
                 break;
 
@@ -105,6 +107,8 @@ int main(int argc, char **argv){
                 case GAME_FULL:
                     puts("This game is full");
                     break;
+                default:
+                    printf("Something went wrong. Error: %d", error_code);
             }
     }
     
@@ -118,7 +122,7 @@ error create_game(int client_fd){
     error error_code;
     puts("Insert game name, timer length in the form: <GAME_NAME>:<TIMER>");
     fgets(input_buffer, sizeof(input_buffer), stdin);
-    flush_stdin();
+    //flush_stdin();
     send(client_fd, input_buffer, strlen(input_buffer), 0);
 
     recv(client_fd, &error_code, sizeof(error_code), 0);
@@ -126,11 +130,11 @@ error create_game(int client_fd){
 }
 
 error join_game(int client_fd){
-    char input_buffer[GAME_NAME_MAX_LENGTH];
+    char input_buffer[BUFFER_LEN];
     error error_code;
     puts("Insert game name: ");
     fgets(input_buffer, sizeof(input_buffer), stdin);
-    flush_stdin();
+    //flush_stdin();
     send(client_fd, input_buffer, strlen(input_buffer), 0);
 
     recv(client_fd, &error_code, sizeof(error_code), 0);
@@ -138,7 +142,7 @@ error join_game(int client_fd){
 }
 
 void game_menu(int client_fd){
-    char input_buffer[GAME_NAME_MAX_LENGTH];
+    char input_buffer[BUFFER_LEN];
     char player_color_str[10];
     Position *positions = malloc(sizeof(Position)*2);
     piece_color player_color, curr_color=WHITE;
@@ -160,34 +164,31 @@ void game_menu(int client_fd){
 
     printf("The game has begun! You're %s\n", player_color_str);
     while(status == RUNNING){
+        printf("Game running\n");
+        memset(input_buffer, 0, sizeof(input_buffer));
         error = 1;
         render_board(board, player_color);
         if(curr_color == player_color){
             printf("It's your turn!\n");
             while(error){
                 fgets(input_buffer, sizeof(input_buffer), stdin);
-                if(parse_move(positions, input_buffer) == NULL){
-                    printf("Invalid input\n");
-                }
-                else if(!is_move_valid(board, player_color, positions[0], positions[1])){
-                    printf("Mossa invalida\n");
-                }
+                //flush_stdin();
+                //Sends the move and waits for feedback
+                send(client_fd, input_buffer, strlen(input_buffer), 0);
+                printf("Move sent: %s of length %ld\n", input_buffer, strlen(input_buffer));
+                recv(client_fd, &server_response_move, sizeof(move_validation_result), 0);
+                if(server_response_move == INVALID_MOVE) printf("Invalid move\n");
                 else{
-                    //Sends the move and waits for feedback
-                    send(client_fd, input_buffer, strlen(input_buffer), 0);
-                    recv(client_fd, &server_response_move, sizeof(server_response_move), 0);
-                    if(server_response_move == INVALID_MOVE) printf("Invalid move\n");
-                    else{
-                        printf("%d%d to %d%d\n", positions[0].col, positions[0].row, positions[1].col, positions[1].row);
-                        move_piece(board, positions[0], positions[1]);
-                        error = 0;
-                    }
+                    parse_move(positions, input_buffer);
+                    printf("%d%d to %d%d\n", positions[0].col, positions[0].row, positions[1].col, positions[1].row);
+                    move_piece(board, positions[0], positions[1]);
+                    error = 0;
                 }
-            }   
-        }
+            }
+        }   
         else{
             printf("It's your opponent's turn!\n");
-            recv(client_fd, &input_buffer, sizeof(input_buffer), 0);
+            recv(client_fd, input_buffer, sizeof(input_buffer), 0);
             parse_move(positions, input_buffer);
             move_piece(board, positions[0], positions[1]);
         }
@@ -197,19 +198,24 @@ void game_menu(int client_fd){
         if(curr_color == WHITE) curr_color = BLACK;
         else if(curr_color == BLACK) curr_color = WHITE;
         
-        recv(client_fd, &status, sizeof(status), 0);
-
+        recv(client_fd, &status, sizeof(game_status), 0);
     }
+
     switch(status){
         case RUNNING:
+            printf("ERROR, shouldn't have left game loop\n");
             break;
         case CHECKMATE:
+            printf("Checkmate!");
             break;
         case STALEMATE:
+            printf("Stalemate!");
             break;
         case TIMEOUT:
+            printf("Time's up\n");
             break;
         default:
+            printf("Something weird happened. Status: %d\n", status);
             break;
     }
 }

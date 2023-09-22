@@ -57,8 +57,8 @@ void *client_worker(void *args){
     worker_args *data = (worker_args*)args;
     int client_fd = data->client_fd;
     
-    char input_buffer[64];
-    char game_name[GAME_NAME_MAX_LENGTH]; 
+    char input_buffer[BUFFER_LEN];
+    char game_name[BUFFER_LEN]; 
     unsigned int timer_length;
     client_choice choice;
     ssize_t bytes_read;
@@ -71,7 +71,7 @@ void *client_worker(void *args){
         if(bytes_read){
             switch(choice){
                 case CREATE_GAME:
-                    recvline(client_fd, input_buffer, sizeof(input_buffer), 0);
+                    reclinev(client_fd, input_buffer, sizeof(input_buffer), 0);
                     //Stops the routine if an empty string has been sent 
                     // (can happen in case the client closes the connection)
                     if(*input_buffer == 0) break;
@@ -92,18 +92,15 @@ void *client_worker(void *args){
                     }
 
                     error_code = create_game(client_fd, client_token, game_name, timer_length);
-                    printf("GAME CREATED\n");
                     break;
                     
                 case JOIN_GAME:
                     recvline(client_fd, game_name, sizeof(game_name), 0);
                     if(*game_name == 0) break;
                     error_code = join_game(client_fd, game_name, client_token);
-                    printf("GAME JOINED\n");
                     break;
 
                 case EXIT:
-                    printf("GAME EXITED\n");        
                     pthread_exit(0);
                     break;
             }
@@ -111,7 +108,7 @@ void *client_worker(void *args){
         }
         else{
             //Exit from thread
-            printf("Exiting Thread\n");
+            if (DEBUG) printf("Exiting Thread\n");
             pthread_exit(0);
         }
     }
@@ -141,55 +138,57 @@ error join_game(int client_fd, char *game_name, char *token){
             printf("Game %s does not exist\n", game_name);
         }        
         error_code = GAME_DOESNT_EXIST;
-        return error_code;
     }
+    else{
+        pthread_rwlock_wrlock(&game->rwlock);
 
-    pthread_rwlock_wrlock(&game->rwlock);
-
-    //If the player is already playing, update client_fd
-    //else if the room is not full, simply add the new player
-    //else the room is full
-    if(validate_token(game_name, token)){
-        error_code = NO_ERROR;
-        player *curr = game->match_data->players;
-        for(int i=0; i<game->match_data->connected_players; i++){
-            if(!strcmp(curr->token, token)){
-                curr->socket_fd = client_fd;
+        //If the player is already playing, update client_fd
+        //else if the room is not full, simply add the new player
+        //else the room is full
+        if(validate_token(game_name, token)){
+            error_code = NO_ERROR;
+            player *curr = game->match_data->players;
+            for(int i=0; i<game->match_data->connected_players; i++){
+                if(!strcmp(curr->token, token)){
+                    curr->socket_fd = client_fd;
+                }
+                curr = curr->next_player;
             }
-            curr = curr->next_player;
-        }
 
         if(DEBUG) printf("Game full, but token %s is validated\n", token);
-    }
-    else if(game->match_data->connected_players < MAX_PLAYERS){
-        player* new_player = malloc(sizeof(player));
-        new_player->socket_fd = client_fd;
-        new_player->timer = game->match_data->timer_length;
-        new_player->next_player = NULL;
-        new_player->token = token;
-
-        //If game is empty, player has to be added to head, else after the last player
-        if(game->match_data->connected_players == 0){
-                if(DEBUG) printf("Game is empty, joining player\n");
-                game->match_data->players = new_player;
         }
+        else if(game->match_data->connected_players < MAX_PLAYERS){
+            player* new_player = malloc(sizeof(player));
+            new_player->socket_fd = client_fd;
+            new_player->timer = game->match_data->timer_length;
+            new_player->next_player = NULL;
+            new_player->token = token;
+
+            //If game is empty, player has to be added to head, else after the last player
+            if(game->match_data->connected_players == 0){
+                    game->match_data->players = new_player;
+                    if(DEBUG) printf("Game is empty, joined player\n");
+            }
+            else{
+                    player *curr= game->match_data->players;
+                    while(curr->next_player != NULL) curr=curr->next_player;
+                    curr->next_player = new_player;
+                    if(DEBUG) printf("Game is not full, joined player\n");
+            }
+
+            //Increments counter of connected players, and signals game that a new player has joined
+            game->match_data->connected_players++;
+            error_code = NO_ERROR;
+            pthread_cond_signal(&game->new_player_cond);    
+        }//If the game is full and the player is not playing
         else{
-                if(DEBUG) printf("Game is not full, joining player\n");
-                game->match_data->players->next_player = new_player;
+
+            error_code = GAME_FULL;
+            if(DEBUG) printf("Game is full, player cannot join\n");
         }
 
-        //Increments counter of connected players, and signals game that a new player has joined
-        game->match_data->connected_players++;
-        error_code = NO_ERROR;
-        pthread_cond_signal(&game->new_player_cond);    
-    }//If the game is full and the player is not playing
-    else{
-
-        error_code = GAME_FULL;
-        if(DEBUG) printf("Game is full, player cannot join\n");
+        pthread_rwlock_unlock(&game->rwlock);
     }
-
-    pthread_rwlock_unlock(&game->rwlock);
     return error_code;
 }
 
