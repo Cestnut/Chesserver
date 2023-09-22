@@ -116,9 +116,10 @@ void render_board(board_struct *board, piece_color player_color){
 Position get_king_position(board_struct *board, piece_color player_color){
     piece_struct *piece;
     Position point;
-    int found;
-    for(int row=0; row<BOARD_SIZE; row++){
-        for(int col=0; col<BOARD_SIZE; col++){
+    int found=FALSE;
+    int row, col;
+    for(row=0; row<BOARD_SIZE; row++){
+        for(col=0; col<BOARD_SIZE; col++){
             piece = board->board[col][row];
             if(piece->color == player_color && piece->type == KING){
                 point.col = col;
@@ -129,6 +130,7 @@ Position get_king_position(board_struct *board, piece_color player_color){
         }
         if(found) break;
     }
+    if (DEBUG) printf("found:%d, row:%d, col:%d", found, row, col);
 
     return point;
 }
@@ -144,7 +146,6 @@ int is_move_safe(board_struct *board, piece_color player_color, Position src_pos
     *board->board[dst_position.col][dst_position.row] = *moving_piece;
     moving_piece->color = NO_COLOR;
     moving_piece->type = NO_TYPE;
-    if (DEBUG) printf("Moved piece\n");
     if(is_in_check(board, player_color)){
         result = FALSE;
     }
@@ -222,13 +223,14 @@ int is_in_check(board_struct *board, piece_color player_color){
     Position king_position = get_king_position(board, player_color), src_position;
     if(player_color == WHITE) opponent_color=BLACK;
     else if(player_color == BLACK) opponent_color = WHITE;
-
+    if (DEBUG) printf("Player color: %d\nOpponent color: %d\n", player_color, opponent_color);
     for(int row=0; row<BOARD_SIZE; row++){
         for(int col=0; col<BOARD_SIZE; col++){
             piece = board->board[col][row];
             if(piece->color == opponent_color){
                 src_position.col = col;
                 src_position.row = row;
+                if (DEBUG) printf("Seeing if player %d can do move %d%d-%d%d", opponent_color, col,row, king_position.col, king_position.row);
                 if(is_pattern_valid(board, opponent_color, src_position, king_position)){
                     if(DEBUG) printf("This would put the king in check from %d%d that could go to %d%d\n", col, row, king_position.col, king_position.row);
                     return TRUE;

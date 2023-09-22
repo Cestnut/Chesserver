@@ -79,7 +79,6 @@ typedef struct player{
 
 typedef struct match_data{
     player *players;
-    unsigned int timer_length;
     unsigned short int num_players; //usato per scorrere la lista dei giocatori
 } match_data;
 

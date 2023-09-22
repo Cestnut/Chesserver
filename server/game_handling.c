@@ -10,7 +10,7 @@ void init_games(){
     pthread_rwlock_init(&games->rwlock, NULL);
 }
 
-error insert_game(char *name, unsigned int timer_length){
+error insert_game(char *name){
     error error_code;
     pthread_rwlock_wrlock(&games->rwlock);
     if(get_game(name) != NULL){
@@ -22,7 +22,6 @@ error insert_game(char *name, unsigned int timer_length){
         match_data* data = malloc(sizeof(match_data));
         data->board = NULL;
         data->players = NULL;
-        data->timer_length = timer_length;
         data->connected_players = 0;
         game_entry->match_data = data;
 
@@ -147,15 +146,17 @@ void *run_game(void *args){
         current_player = current_player->next_player;
 
         //Send move
-        send(current_player->socket_fd, input_buffer, strlen(input_buffer), 0);
+        while(send(current_player->socket_fd, input_buffer, strlen(input_buffer), 0)==-1) if (DEBUG) printf("Error sending move: retrying");
         if(DEBUG) printf("Sent move to other player\n");
 
         //Sets new game status and sends it to each player
         if(!has_valid_moves(board, current_player->player_color)){
             if(is_in_check(board, current_player->player_color)){
+                if (DEBUG) printf("Checkamte\n");
                 status = CHECKMATE;
             }
             else{
+                if (DEBUG) printf("Stalemate\n");
                 status = STALEMATE;
             }
         }
@@ -163,11 +164,26 @@ void *run_game(void *args){
         if(DEBUG) printf("Calculated new status\n");
 
         for(int i=0; i<current_game->match_data->connected_players; i++){
-            send(current_player->socket_fd, &status, sizeof(game_status), 0);
+            while (send(current_player->socket_fd, &status, sizeof(game_status), 0) == -1) if(DEBUG) printf("Error sending status: retrying");
             current_player = current_player->next_player;
         }
 
         if(DEBUG)printf("Sent new status to both players\n");
+    }
+
+    switch(status){
+        case RUNNING:
+            printf("ERROR, shouldn't have left game loop\n");
+            break;
+        case CHECKMATE:
+            printf("Checkmate!");
+            break;
+        case STALEMATE:
+            printf("Stalemate!");
+            break;
+        default:
+            printf("Something weird happened. Status: %d\n", status);
+            break;
     }
 
     clean_game(current_game);

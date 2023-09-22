@@ -1,8 +1,7 @@
 #include "server_connection.h"
 
 error join_game(int client_fd, char *game_name);
-error create_game(int client_fd, char *game_name, unsigned int timer_length);
-int validate_token(char *game_name, char *token);
+error create_game(int client_fd, char *game_name);
 
 
 int create_server_socket(int port){
@@ -45,7 +44,6 @@ void *client_worker(void *args){
     
     char input_buffer[BUFFER_LEN];
     char game_name[BUFFER_LEN]; 
-    unsigned int timer_length;
     client_choice choice;
     ssize_t bytes_read;
     error error_code = 0;
@@ -60,22 +58,9 @@ void *client_worker(void *args){
                     // (can happen in case the client closes the connection)
                     if(*input_buffer == 0) break;
                     
-                    char *split_token;
-                    split_token = strtok(input_buffer, ":");
-                    strncpy(game_name, split_token, GAME_NAME_MAX_LENGTH);
-                        
-                    split_token = strtok(NULL, "");
-                    if(split_token == NULL || !(is_number(split_token))){
-                        error_code = INVALID_INPUT;
-                        if(DEBUG) printf("Input in creating room is not valid, split_token: %s\n", split_token);
-                        
-                        break;
-                    }
-                    else{
-                        timer_length = strtoul(split_token,0,0);
-                    }
+                    strncpy(game_name, input_buffer, GAME_NAME_MAX_LENGTH);
 
-                    error_code = create_game(client_fd, game_name, timer_length);
+                    error_code = create_game(client_fd, game_name);
                     break;
                     
                 case JOIN_GAME:
@@ -99,10 +84,10 @@ void *client_worker(void *args){
     return NULL;
 }
 
-error create_game(int client_fd, char *game_name, unsigned int timer_length){
+error create_game(int client_fd, char *game_name){
     error error_code;
     
-    error_code = insert_game(game_name, timer_length);
+    error_code = insert_game(game_name);
 
     if(error_code != NO_ERROR){
         return error_code;
@@ -131,7 +116,6 @@ error join_game(int client_fd, char *game_name){
         if(game->match_data->connected_players < MAX_PLAYERS){
             player* new_player = malloc(sizeof(player));
             new_player->socket_fd = client_fd;
-            new_player->timer = game->match_data->timer_length;
             new_player->next_player = NULL;
 
             //If game is empty, player has to be added to head, else after the last player

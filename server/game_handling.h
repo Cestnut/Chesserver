@@ -8,8 +8,6 @@
 #include "../common/common_conf.h"
 #include "server_conf.h"
 typedef struct player{
-    char *token;
-    int timer;
     int socket_fd;
     piece_color player_color;
     struct player *next_player;
@@ -18,7 +16,6 @@ typedef struct player{
 
 typedef struct match_data{
     player *players;
-    unsigned int timer_length;
     board_struct *board;
     //usato per controllare se la lobby e piena e aggiungere nuovi giocatori
     unsigned short int connected_players;
@@ -40,7 +37,7 @@ typedef struct games_struct{
 } games_struct;
 
 void init_games();
-error insert_game(char *name, unsigned int timer_length);
+error insert_game(char *name);
 game *get_game(char *name);
 void delete_game(char *name);
 

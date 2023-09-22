@@ -2,6 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "../common/chess.h"
+#define DEBUG TRUE
 
 error create_game(int client_fd);
 error join_game(int client_fd);
@@ -59,7 +60,6 @@ int main(int argc, char **argv){
     error error_code;
     
     //Manda input
-    send_token(client_fd);
     while(1){
         printf("%s\n", command_prompt);    
         fgets(input, sizeof(input), stdin);
@@ -120,7 +120,7 @@ int main(int argc, char **argv){
 error create_game(int client_fd){
     char input_buffer[BUFFER_LEN];
     error error_code;
-    puts("Insert game name, timer length in the form: <GAME_NAME>:<TIMER>");
+    puts("Insert game name: ");
     fgets(input_buffer, sizeof(input_buffer), stdin);
     //flush_stdin();
     send(client_fd, input_buffer, strlen(input_buffer), 0);
@@ -171,18 +171,33 @@ void game_menu(int client_fd){
         if(curr_color == player_color){
             printf("It's your turn!\n");
             while(error){
+                printf("Your move: \n");
                 fgets(input_buffer, sizeof(input_buffer), stdin);
                 //flush_stdin();
                 //Sends the move and waits for feedback
-                send(client_fd, input_buffer, strlen(input_buffer), 0);
-                printf("Move sent: %s of length %ld\n", input_buffer, strlen(input_buffer));
-                recv(client_fd, &server_response_move, sizeof(move_validation_result), 0);
-                if(server_response_move == INVALID_MOVE) printf("Invalid move\n");
+                strip_newlines(input_buffer, strlen(input_buffer));
+                if(parse_move(positions, input_buffer) == NULL){
+                    error = 1;
+                    if (DEBUG) printf("Invalid pattern\n");
+                }
+                else if(!is_move_valid(board, player_color, positions[0], positions[1])){
+                    error = 1;
+                    if (DEBUG) printf("Invalid move\n");
+                }
+                else if(send(client_fd, input_buffer, strlen(input_buffer), 0) == -1){
+                    if(DEBUG) printf("Error sending move. Errno: %d", errno);
+                    error = 1;
+                }
                 else{
-                    parse_move(positions, input_buffer);
-                    printf("%d%d to %d%d\n", positions[0].col, positions[0].row, positions[1].col, positions[1].row);
-                    move_piece(board, positions[0], positions[1]);
-                    error = 0;
+                    if (DEBUG) printf("Move sent: %s of length %ld\n", input_buffer, strlen(input_buffer));
+                    recv(client_fd, &server_response_move, sizeof(move_validation_result), 0);
+                    if(server_response_move == INVALID_MOVE) printf("Invalid move\n");
+                    else{
+                        parse_move(positions, input_buffer);
+                        if (DEBUG) printf("%d%d to %d%d\n", positions[0].col, positions[0].row, positions[1].col, positions[1].row);
+                        move_piece(board, positions[0], positions[1]);
+                        error = 0;
+                    }
                 }
             }
         }   
@@ -210,9 +225,6 @@ void game_menu(int client_fd){
             break;
         case STALEMATE:
             printf("Stalemate!");
-            break;
-        case TIMEOUT:
-            printf("Time's up\n");
             break;
         default:
             printf("Something weird happened. Status: %d\n", status);

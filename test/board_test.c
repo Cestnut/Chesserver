@@ -3,25 +3,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-player *init_players(int timer){
+player *init_players(){
     player *player1, *player2;
     player1 = malloc(sizeof(player));
     player2 = malloc(sizeof(player));
 
     player1->player_color = WHITE;
-    player1->timer = timer;
     player1->next_player = player2;
 
     player2->player_color = BLACK;
-    player2->timer = timer;
     player2->next_player = player1;
 
     return player1;
-}
-
-void print_timer(){
-    int timer = 100;
-
 }
 
 int main(){
@@ -32,7 +25,7 @@ int main(){
         
     Position *points = malloc(sizeof(Position)*2);
     while(TRUE){
-        if(!has_valid_moves(board, curr_player->player_color)){
+        /*if(!has_valid_moves(board, curr_player->player_color)){
             if(is_in_check(board, curr_player->player_color)){
                 printf("Checkmate\n");
             }
@@ -40,7 +33,7 @@ int main(){
                 printf("Stalemate\n");
             }
             break;
-        }
+        }*/
         
         render_board(board, curr_player->player_color);        
         fgets(input, sizeof(input), stdin);

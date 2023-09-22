@@ -16,9 +16,10 @@ int is_number(char *string){
 }
 
 void strip_newlines(char *buffer, size_t len){
-    for(size_t i= 1; i<len; i++){
+    for(size_t i=0; i<len; i++){
         if(buffer[len-i]=='\n'){
             buffer[len-i] = 0x0;
+            break;
         }
     }
 }
