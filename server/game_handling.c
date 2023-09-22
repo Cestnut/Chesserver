@@ -1,4 +1,6 @@
 #include "game_handling.h"
+#include "server_connection.h"
+
 
 games_struct *games;
 
@@ -56,9 +58,7 @@ void delete_game(char *name){
     game* game_entry = get_game(name);
     if(game_entry) {
         clean_game(game_entry);
-        free(game_entry->match_data);
         HASH_DEL(games->hashmap, game_entry);
-        free(game_entry);
     }
     pthread_rwlock_unlock(&games->rwlock);
 }
@@ -202,6 +202,16 @@ void *run_game(void *args){
             printf("Something weird happened. Status: %d\n", status);
             break;
     }
+
+    worker_args **workers_args = malloc(sizeof(worker_args *) *current_game->match_data->connected_players);
+    pthread_t tid;
+    for(int i=0; i<current_game->match_data->connected_players; i++){
+        workers_args[i] = malloc(sizeof(worker_args));
+        workers_args[i]->client_fd = current_player->socket_fd;
+        pthread_create(&tid, NULL, client_worker, (void *)workers_args[i]);
+        current_player = current_player->next_player;
+    }
+    free(workers_args);
 
     clean_game(current_game);
     return NULL;
