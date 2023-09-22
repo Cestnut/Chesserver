@@ -24,5 +24,4 @@ typedef enum{
 
 void flush_stdin();
 int is_number(char *string);
-char *random_string(int bytes_length);
 ssize_t recvline(int sockfd, void *buf, size_t len, int flags);
