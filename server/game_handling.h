@@ -2,11 +2,12 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <stdio.h>
-#include "../common/chess.h"
-#include "../common/common.h"
 #include "../common/uthash.h"
 #include "../common/common_conf.h"
 #include "server_conf.h"
+#include "logging.h"
+
+
 typedef struct player{
     int socket_fd;
     piece_color player_color;
@@ -22,6 +23,7 @@ typedef struct match_data{
 } match_data;
 
 typedef struct game{
+    FILE *log_file;
     char name[GAME_NAME_MAX_LENGTH];
     pthread_t tid;
     pthread_rwlock_t rwlock;

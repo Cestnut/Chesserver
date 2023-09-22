@@ -19,6 +19,7 @@ error insert_game(char *name){
     else{
         game* game_entry = malloc(sizeof(game));
         strcpy(game_entry->name, name);
+        game_entry->log_file = create_game_log(name);
         match_data* data = malloc(sizeof(match_data));
         data->board = NULL;
         data->players = NULL;
@@ -136,6 +137,7 @@ void *run_game(void *args){
             }
             else{
                 move_piece(board, positions[0], positions[1]);
+                log_move(current_game->log_file, input_buffer, current_player->player_color);
                 server_response_move = VALID_MOVE;
                 error = 0;
             }
@@ -170,7 +172,7 @@ void *run_game(void *args){
 
         if(DEBUG)printf("Sent new status to both players\n");
     }
-
+    log_end(current_game->log_file, status, current_player->player_color);
     switch(status){
         case RUNNING:
             printf("ERROR, shouldn't have left game loop\n");
