@@ -1,4 +1,5 @@
 #include "server_connection.h"
+#include "game_handling.h"
 
 error join_game(int client_fd, char *game_name);
 error create_game(int client_fd, char *game_name);
@@ -49,7 +50,7 @@ void *client_worker(void *args){
     error error_code = 0;
 
     while(1){
-        bytes_read = recv(client_fd, &choice, sizeof(client_choice), 0);
+        bytes_read = recvline(client_fd, &choice, sizeof(client_choice), 0);
         if(bytes_read){
             switch(choice){
                 case CREATE_GAME:
@@ -59,7 +60,7 @@ void *client_worker(void *args){
                     if(*input_buffer == 0) break;
                     
                     strncpy(game_name, input_buffer, GAME_NAME_MAX_LENGTH);
-
+                    printf("creating game\n");
                     error_code = create_game(client_fd, game_name);
                     break;
                     
@@ -81,13 +82,16 @@ void *client_worker(void *args){
             pthread_exit(0);
         }
     }
+    free(args);
     return NULL;
 }
 
 error create_game(int client_fd, char *game_name){
     error error_code;
-    
+
+    printf("About to insert game: %s", game_name);
     error_code = insert_game(game_name);
+    if (DEBUG) printf("Tried inserting game: %s", game_name);
 
     if(error_code != NO_ERROR){
         return error_code;

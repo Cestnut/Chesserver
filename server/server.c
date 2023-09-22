@@ -1,4 +1,5 @@
 #include "server_connection.h"
+#include "game_handling.h"
 
 
 int main(int argc, char **argv){
@@ -44,7 +45,7 @@ int main(int argc, char **argv){
         ready = poll(pfds, nfds, 3000);
 
         if(ready > 0){
-            recv(client_fd, input_buffer, sizeof(input_buffer), 0);
+            recvline(client_fd, input_buffer, sizeof(input_buffer), 0);
             send(client_fd, input_buffer, strlen(input_buffer), 0);
         }
         else if(ready == 0){

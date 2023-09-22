@@ -1,4 +1,5 @@
 #include "common.h"
+#include <errno.h>
 
 void flush_stdin(){
     int c;
@@ -26,6 +27,9 @@ void strip_newlines(char *buffer, size_t len){
 
 ssize_t recvline(int sockfd, void *buf, size_t len, int flags){
     ssize_t bytes_read = recv(sockfd, buf, len, flags);
+    if(bytes_read == -1){
+        printf("Error receiving message: errno %d\n", errno);
+    }
     strip_newlines(buf, len);
     return bytes_read;
 }

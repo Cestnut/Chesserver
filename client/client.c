@@ -125,7 +125,7 @@ error create_game(int client_fd){
     //flush_stdin();
     send(client_fd, input_buffer, strlen(input_buffer), 0);
 
-    recv(client_fd, &error_code, sizeof(error_code), 0);
+    recvline(client_fd, &error_code, sizeof(error_code), 0);
     return error_code;
 }
 
@@ -137,7 +137,7 @@ error join_game(int client_fd){
     //flush_stdin();
     send(client_fd, input_buffer, strlen(input_buffer), 0);
 
-    recv(client_fd, &error_code, sizeof(error_code), 0);
+    recvline(client_fd, &error_code, sizeof(error_code), 0);
     return error_code;
 }
 
@@ -152,7 +152,7 @@ void game_menu(int client_fd){
     int error;
 
     printf("Waiting for game to begin\n");
-    recv(client_fd, &player_color, sizeof(player_color), 0);
+    recvline(client_fd, &player_color, sizeof(player_color), 0);
     if(player_color == WHITE){
         strncpy(player_color_str, "WHITE", sizeof(player_color_str));
     }
@@ -190,7 +190,7 @@ void game_menu(int client_fd){
                 }
                 else{
                     if (DEBUG) printf("Move sent: %s of length %ld\n", input_buffer, strlen(input_buffer));
-                    recv(client_fd, &server_response_move, sizeof(move_validation_result), 0);
+                    recvline(client_fd, &server_response_move, sizeof(move_validation_result), 0);
                     if(server_response_move == INVALID_MOVE) printf("Invalid move\n");
                     else{
                         parse_move(positions, input_buffer);
@@ -203,7 +203,7 @@ void game_menu(int client_fd){
         }   
         else{
             printf("It's your opponent's turn!\n");
-            recv(client_fd, input_buffer, sizeof(input_buffer), 0);
+            recvline(client_fd, input_buffer, sizeof(input_buffer), 0);
             parse_move(positions, input_buffer);
             move_piece(board, positions[0], positions[1]);
         }
@@ -213,7 +213,7 @@ void game_menu(int client_fd){
         if(curr_color == WHITE) curr_color = BLACK;
         else if(curr_color == BLACK) curr_color = WHITE;
         
-        recv(client_fd, &status, sizeof(game_status), 0);
+        recvline(client_fd, &status, sizeof(game_status), 0);
     }
 
     switch(status){

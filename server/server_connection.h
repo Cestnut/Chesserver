@@ -7,7 +7,6 @@
 #include <errno.h>
 #include <time.h>
 #include <poll.h>
-#include "game_handling.h"
 #include "server_conf.h"
 #include "../common/common_conf.h"
 
