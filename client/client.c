@@ -152,7 +152,11 @@ void game_menu(int client_fd){
     int error;
 
     printf("Waiting for game to begin\n");
-    recvline(client_fd, &player_color, sizeof(player_color), 0);
+    if(recvline(client_fd, &player_color, sizeof(player_color), 0) == 0){
+        printf("Server closed the connection\nExiting...");
+        exit(0);
+    }
+
     if(player_color == WHITE){
         strncpy(player_color_str, "WHITE", sizeof(player_color_str));
     }
@@ -169,9 +173,12 @@ void game_menu(int client_fd){
         error = 1;
         render_board(board, player_color);
         if(curr_color == player_color){
+            memset(input_buffer, 0, sizeof(input_buffer));
+            fflush(stdin);
             printf("It's your turn!\n");
             while(error){
                 printf("Your move: \n");
+                memset(input_buffer, 0, sizeof(input_buffer));
                 fgets(input_buffer, sizeof(input_buffer), stdin);
                 //flush_stdin();
                 //Sends the move and waits for feedback
@@ -190,7 +197,11 @@ void game_menu(int client_fd){
                 }
                 else{
                     if (DEBUG) printf("Move sent: %s of length %ld\n", input_buffer, strlen(input_buffer));
-                    recvline(client_fd, &server_response_move, sizeof(move_validation_result), 0);
+                    if(recvline(client_fd, &server_response_move, sizeof(move_validation_result), 0)== 0){
+                        printf("Server closed the connection\nExiting...");
+                        exit(0);
+                    }
+
                     if(server_response_move == INVALID_MOVE) printf("Invalid move\n");
                     else{
                         parse_move(positions, input_buffer);
@@ -203,7 +214,10 @@ void game_menu(int client_fd){
         }   
         else{
             printf("It's your opponent's turn!\n");
-            recvline(client_fd, input_buffer, sizeof(input_buffer), 0);
+            if(recvline(client_fd, input_buffer, sizeof(input_buffer), 0)== 0){
+                printf("Server closed the connection\nExiting...");
+                exit(0);
+            }
             parse_move(positions, input_buffer);
             move_piece(board, positions[0], positions[1]);
         }
@@ -213,8 +227,14 @@ void game_menu(int client_fd){
         if(curr_color == WHITE) curr_color = BLACK;
         else if(curr_color == BLACK) curr_color = WHITE;
         
-        recvline(client_fd, &status, sizeof(game_status), 0);
+        if(recvline(client_fd, &status, sizeof(game_status), 0)== 0){
+            printf("Server closed the connection\nExiting...\n");
+            exit(0);
+        }
     }
+
+    free(positions);
+    clean_board(board);
 
     switch(status){
         case RUNNING:
@@ -227,6 +247,9 @@ void game_menu(int client_fd){
             break;
         case STALEMATE:
             printf("Stalemate!\n");
+            break;
+        case TIMEOUT:
+            printf("The other player disconnected, you won!\n");
             break;
         default:
             printf("Something weird happened. Status: %d\n", status);

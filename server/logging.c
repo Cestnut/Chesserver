@@ -61,14 +61,16 @@ void log_move(FILE *log_file, char *move, piece_color player_color){
 void log_end(FILE *log_file, game_status status, piece_color winner){
     if(log_file != NULL){
         char winner_str[10];
-        if(status == CHECKMATE){
-            if(winner == WHITE) sprintf(winner_str, "%s", "BLACK");
-            else if(winner == BLACK) sprintf(winner_str, "%s", "WHITE");
-            fprintf(log_file,"CHECKMATE %s WON",winner_str);
-            fflush(log_file);
-            }
-        else if(status == STALEMATE) fprintf(log_file, "%s", "STALEMATE");
+        if(winner == WHITE) sprintf(winner_str, "%s", "BLACK");
+        else if(winner == BLACK) sprintf(winner_str, "%s", "WHITE");
+
+        if(status == CHECKMATE) fprintf(log_file,"CHECKMATE %s WON\n",winner_str);
+        else if(status == STALEMATE) fprintf(log_file, "%s", "STALEMATE\n");
+        else if(status == TIMEOUT) fprintf(log_file, "TIMEOUT %s WON\n", winner_str);
+
         if(DEBUG) printf("Writing ending to file\n");
+        fflush(log_file);
+
     }
     else{
         if(DEBUG) printf("File handler is NULL\n");

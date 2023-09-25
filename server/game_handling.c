@@ -69,13 +69,8 @@ void clean_game(game *game){
     player *curr_player = data->players, *tmp_player;
     board_struct *board = data->board;
     
-    for(int col=0; col<BOARD_SIZE; col++){
-        for(int row=0; row<BOARD_SIZE; row++){
-            free(board->board[col][row]);
-        }
-    }
-    free(board);
-
+    clean_board(board);
+    
     for(int i=0; i<data->connected_players; i++){
         tmp_player = curr_player;
         curr_player = curr_player->next_player;
@@ -83,7 +78,7 @@ void clean_game(game *game){
     }
     free(data);
 
-    fclose(game->log_file);
+    if(game->log_file != NULL) fclose(game->log_file);
     free(game);
 }
 
@@ -132,71 +127,90 @@ void *run_game(void *args){
     board_struct *board = init_board();
     current_game->match_data->board = board;
     while(status == RUNNING){
-        memset(input_buffer, 0, sizeof(input_buffer));
         error=1;
         if (DEBUG) printf("Game running\n");
         while(error){
             //Receive move
             if(DEBUG) render_board(board, WHITE);
             if(DEBUG) printf("Waiting for move\n");
-            recvline(current_player->socket_fd, input_buffer, sizeof(input_buffer), 0);
-            if(DEBUG) printf("Received move: %s\n", input_buffer);
-            //Validate and make move
-            if(parse_move(positions, input_buffer) == NULL){
-                if (DEBUG) printf("Invalid input\n");
-                server_response_move = INVALID_MOVE;
-            }
-            else if(!is_move_valid(board, current_player->player_color, positions[0], positions[1])){
-                if (DEBUG) printf("Invalid move\n");
-                server_response_move = INVALID_MOVE;
+            memset(input_buffer, 0, sizeof(input_buffer));
+            if(recvline(current_player->socket_fd, input_buffer, sizeof(input_buffer), 0)){
+
+                if(DEBUG) printf("Received move: %s\n", input_buffer);
+                //Validate and make move
+                if(parse_move(positions, input_buffer) == NULL){
+                    if (DEBUG) printf("Invalid input\n");
+                    server_response_move = INVALID_MOVE;
+                }
+                else if(!is_move_valid(board, current_player->player_color, positions[0], positions[1])){
+                    if (DEBUG) printf("Invalid move\n");
+                    server_response_move = INVALID_MOVE;
+                }
+                else{
+                    move_piece(board, positions[0], positions[1]);
+                    log_move(current_game->log_file, input_buffer, current_player->player_color);
+                    server_response_move = VALID_MOVE;
+                    error = 0;
+                }
+                send(current_player->socket_fd, &server_response_move, sizeof(move_validation_result), 0);
             }
             else{
-                move_piece(board, positions[0], positions[1]);
-                log_move(current_game->log_file, input_buffer, current_player->player_color);
-                server_response_move = VALID_MOVE;
-                error = 0;
+                if (DEBUG) printf("Player disconnected\nThe other player won.\n");
+                error=0;
+                status = TIMEOUT;
             }
-            send(current_player->socket_fd, &server_response_move, sizeof(move_validation_result), 0);
         }
 
         //Changes player here, because the next messages will be sent to them.
         current_player = current_player->next_player;
 
-        //Send move
-        while(send(current_player->socket_fd, input_buffer, strlen(input_buffer), 0)==-1) if (DEBUG) printf("Error sending move: retrying");
-        if(DEBUG) printf("Sent move to other player\n");
+        if(status != TIMEOUT){
+            //Send move
+            while(send(current_player->socket_fd, input_buffer, strlen(input_buffer), 0)==-1) if (DEBUG) printf("Error sending move: retrying");
+            if(DEBUG) printf("Sent move to other player\n");
 
-        //Sets new game status and sends it to each player
-        if(!has_valid_moves(board, current_player->player_color)){
-            if(is_in_check(board, current_player->player_color)){
-                if (DEBUG) printf("Checkmate\n");
-                status = CHECKMATE;
+            //Sets new game status and sends it to each player
+            if(!has_valid_moves(board, current_player->player_color)){
+                if(is_in_check(board, current_player->player_color)){
+                    if (DEBUG) printf("Checkmate\n");
+                    status = CHECKMATE;
+                }
+                else{
+                    if (DEBUG) printf("Stalemate\n");
+                    status = STALEMATE;
+                }
             }
-            else{
-                if (DEBUG) printf("Stalemate\n");
-                status = STALEMATE;
+            else status = RUNNING;
+            if(DEBUG) printf("Calculated new status\n");
+
+            for(int i=0; i<current_game->match_data->connected_players; i++){
+                while (send(current_player->socket_fd, &status, sizeof(game_status), 0) == -1) if(DEBUG) printf("Error sending status: retrying");
+                current_player = current_player->next_player;
             }
-        }
-        else status = RUNNING;
-        if(DEBUG) printf("Calculated new status\n");
 
-        for(int i=0; i<current_game->match_data->connected_players; i++){
-            while (send(current_player->socket_fd, &status, sizeof(game_status), 0) == -1) if(DEBUG) printf("Error sending status: retrying");
-            current_player = current_player->next_player;
+            if(DEBUG)printf("Sent new status to both players\n");
         }
-
-        if(DEBUG)printf("Sent new status to both players\n");
+        else{
+            //TIMEOUT. Send no move and new status only to other player
+            char no_move[] = "a1-a1";
+            send(current_player->socket_fd, no_move, strlen(no_move), 0);
+            send(current_player->socket_fd, &status, sizeof(game_status), 0);
+        }
     }
+        
     log_end(current_game->log_file, status, current_player->player_color);
     switch(status){
         case RUNNING:
             printf("ERROR, shouldn't have left game loop\n");
             break;
         case CHECKMATE:
-            printf("Checkmate!");
+            printf("Checkmate!\n");
             break;
         case STALEMATE:
-            printf("Stalemate!");
+            printf("Stalemate!\n");
+            break;
+        case TIMEOUT:
+            printf("Timeout!\n");
             break;
         default:
             printf("Something weird happened. Status: %d\n", status);
@@ -212,7 +226,6 @@ void *run_game(void *args){
         current_player = current_player->next_player;
     }
     free(workers_args);
-
     clean_game(current_game);
     return NULL;
 }
