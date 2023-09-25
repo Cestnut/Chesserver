@@ -40,6 +40,7 @@ int create_server_socket(int port){
 }
 
 void *client_worker(void *args){
+    if (DEBUG) printf("Entering worker thread\n");
     worker_args *data = (worker_args*)args;
     int client_fd = data->client_fd;
     
@@ -47,9 +48,9 @@ void *client_worker(void *args){
     char game_name[BUFFER_LEN]; 
     client_choice choice;
     ssize_t bytes_read;
-    error error_code = 0;
+    error error_code = NO_ERROR;
 
-    while(1){
+    do{
         bytes_read = recvline(client_fd, &choice, sizeof(client_choice), 0);
         if(bytes_read){
             switch(choice){
@@ -60,7 +61,7 @@ void *client_worker(void *args){
                     if(*input_buffer == 0) break;
                     
                     strncpy(game_name, input_buffer, GAME_NAME_MAX_LENGTH);
-                    printf("creating game\n");
+                    if (DEBUG) printf("creating game\n");
                     error_code = create_game(client_fd, game_name);
                     break;
                     
@@ -80,7 +81,9 @@ void *client_worker(void *args){
             if (DEBUG) printf("Exiting Thread\n");
             pthread_exit(0);
         }
-    }
+    }while(error_code != NO_ERROR);
+    
+    if (DEBUG) printf("Left thread\n");
     free(args);
     return NULL;
 }
@@ -88,16 +91,16 @@ void *client_worker(void *args){
 error create_game(int client_fd, char *game_name){
     error error_code;
 
-    printf("About to insert game: %s", game_name);
+    if (DEBUG) printf("About to insert game: %s\n", game_name);
     error_code = insert_game(game_name);
-    if (DEBUG) printf("Tried inserting game: %s", game_name);
+    if (DEBUG) printf("Tried inserting game: %s\n", game_name);
 
     if(error_code != NO_ERROR){
-        send(client_fd, &error_code, 1, 0);
+        send(client_fd, &error_code, sizeof(error), 0);
         return error_code;
     }
     else{
-        if (DEBUG) printf("Game created. Game name: %s", game_name);
+        if (DEBUG) printf("Game created. Game name: %s\n", game_name);
         return join_game(client_fd, game_name);
     }
 }
@@ -111,6 +114,7 @@ error join_game(int client_fd, char *game_name){
             printf("Game %s does not exist\n", game_name);
         }        
         error_code = GAME_DOESNT_EXIST;
+        send(client_fd, &error_code, sizeof(error), 0);
     }
     else{
         pthread_rwlock_wrlock(&game->rwlock);
@@ -137,13 +141,13 @@ error join_game(int client_fd, char *game_name){
             //Increments counter of connected players, and signals game that a new player has joined
             game->match_data->connected_players++;
             error_code = NO_ERROR;
-            send(client_fd, &error_code, 1, 0);
+            send(client_fd, &error_code, sizeof(error), 0);
             pthread_cond_signal(&game->new_player_cond);    
         }//If the game is full and the player is not playing
         else{
 
             error_code = GAME_FULL;
-            send(client_fd, &error_code, 1, 0);
+            send(client_fd, &error_code, sizeof(error), 0);
             if(DEBUG) printf("Game is full, player cannot join\n");
         }
 
