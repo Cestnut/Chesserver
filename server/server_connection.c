@@ -74,7 +74,6 @@ void *client_worker(void *args){
                     pthread_exit(0);
                     break;
             }
-            send(client_fd, &error_code, 1, 0);
         }
         else{
             //Exit from thread
@@ -94,6 +93,7 @@ error create_game(int client_fd, char *game_name){
     if (DEBUG) printf("Tried inserting game: %s", game_name);
 
     if(error_code != NO_ERROR){
+        send(client_fd, &error_code, 1, 0);
         return error_code;
     }
     else{
@@ -137,11 +137,13 @@ error join_game(int client_fd, char *game_name){
             //Increments counter of connected players, and signals game that a new player has joined
             game->match_data->connected_players++;
             error_code = NO_ERROR;
+            send(client_fd, &error_code, 1, 0);
             pthread_cond_signal(&game->new_player_cond);    
         }//If the game is full and the player is not playing
         else{
 
             error_code = GAME_FULL;
+            send(client_fd, &error_code, 1, 0);
             if(DEBUG) printf("Game is full, player cannot join\n");
         }
 
