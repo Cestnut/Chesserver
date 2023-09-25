@@ -14,11 +14,11 @@ void init_games(){
 
 error insert_game(char *name){
     error error_code;
-    pthread_rwlock_wrlock(&games->rwlock);
     if(get_game(name) != NULL){
         error_code = GAME_NAME_TAKEN;
     }
     else{
+        pthread_rwlock_wrlock(&games->rwlock);
         game* game_entry = malloc(sizeof(game));
         strcpy(game_entry->name, name);
         game_entry->log_file = create_game_log(name);
@@ -38,8 +38,8 @@ error insert_game(char *name){
 
         HASH_ADD_STR(games->hashmap, name, game_entry);
         error_code = NO_ERROR;
+        pthread_rwlock_unlock(&games->rwlock);
     }
-    pthread_rwlock_unlock(&games->rwlock);
     return error_code;
 }
 
@@ -54,13 +54,13 @@ game *get_game(char *name){
 }
 
 void delete_game(char *name){
-    pthread_rwlock_wrlock(&games->rwlock);
     game* game_entry = get_game(name);
-    if(game_entry) {
+    if(game_entry){
+        pthread_rwlock_wrlock(&games->rwlock);
         clean_game(game_entry);
         HASH_DEL(games->hashmap, game_entry);
+        pthread_rwlock_unlock(&games->rwlock);
     }
-    pthread_rwlock_unlock(&games->rwlock);
 }
 
 void clean_game(game *game){
@@ -193,7 +193,7 @@ void *run_game(void *args){
         else{
             //TIMEOUT. Send no move and new status only to other player
             char no_move[] = "a1-a1";
-            send(current_player->socket_fd, no_move, strlen(no_move), 0);
+            printf("%ld", send(current_player->socket_fd, no_move, strlen(no_move), 0));
             send(current_player->socket_fd, &status, sizeof(game_status), 0);
         }
     }
@@ -226,6 +226,6 @@ void *run_game(void *args){
         current_player = current_player->next_player;
     }
     free(workers_args);
-    clean_game(current_game);
+    delete_game(current_game->name);
     return NULL;
 }
