@@ -166,8 +166,9 @@ void *run_game(void *args){
 
         if(status != TIMEOUT){
             //Send move
-            while(send(current_player->socket_fd, input_buffer, strlen(input_buffer), 0)==-1) if (DEBUG) printf("Error sending move: retrying");
-            if(DEBUG) printf("Sent move to other player\n");
+            printf("Sent move %s of size %ld to fd %d\n",input_buffer, send(current_player->socket_fd, input_buffer, strlen(input_buffer), 0), current_player->socket_fd);
+            
+            if (DEBUG) printf("Sent move to other player\n");
 
             //Sets new game status and sends it to each player
             if(!has_valid_moves(board, current_player->player_color)){

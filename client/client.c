@@ -218,6 +218,7 @@ void game_menu(int client_fd){
                 printf("Server closed the connection\nExiting...");
                 exit(0);
             }
+            if (DEBUG) printf("Received move %s\n", input_buffer);
             parse_move(positions, input_buffer);
             move_piece(board, positions[0], positions[1]);
         }
@@ -227,10 +228,12 @@ void game_menu(int client_fd){
         if(curr_color == WHITE) curr_color = BLACK;
         else if(curr_color == BLACK) curr_color = WHITE;
         
+        if(DEBUG) printf("Waiting for new status\n");
         if(recvline(client_fd, &status, sizeof(game_status), 0)== 0){
             printf("Server closed the connection\nExiting...\n");
             exit(0);
         }
+        if(DEBUG) printf("New status received: %d\n", status);
     }
 
     free(positions);
