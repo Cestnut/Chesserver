@@ -27,6 +27,8 @@ Position *parse_move(Position *points, char *move_string);
 
 board_struct *init_board();
 void render_board(board_struct *board, piece_color player_color);
+void clean_board(board_struct *board);
+
 
 //Returns the position of the king of the given point
 Position get_king_position(board_struct *board, piece_color player_color);

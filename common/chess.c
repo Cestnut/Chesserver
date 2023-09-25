@@ -1,7 +1,7 @@
 #include "chess.h"
 #include "common.h"
 #include "common_conf.h"
-#define DEBUG TRUE
+#define DEBUG FALSE
 
 int parse(char *charset, int charset_len, char letter);
 int parse_column(char letter);
@@ -514,4 +514,13 @@ Position *parse_move(Position *points, char *move_string){
 
 
     return points;
+}
+
+void clean_board(board_struct *board){
+    for(int col=0; col<BOARD_SIZE; col++){
+        for(int row=0; row<BOARD_SIZE; row++){
+            free(board->board[col][row]);
+        }
+    }
+    free(board);
 }
