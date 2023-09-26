@@ -114,7 +114,10 @@ void *run_game(void *args){
 
     //Communicate to each player their color
     for(int i=0; i<current_game->match_data->connected_players; i++){
-        send(current_player->socket_fd, &current_player->player_color, sizeof(piece_color), 0);
+        if(sendint(current_player->socket_fd, current_player->player_color, 0) == -1){
+            printf("Errno: %d\n", errno);
+            perror("send");
+        }
         current_player = current_player->next_player;
     }
 
@@ -152,7 +155,10 @@ void *run_game(void *args){
                     server_response_move = VALID_MOVE;
                     error = 0;
                 }
-                send(current_player->socket_fd, &server_response_move, sizeof(move_validation_result), 0);
+                if(sendint(current_player->socket_fd, server_response_move, 0) == -1){
+                    printf("Errno: %d\n", errno);
+                    perror("send");
+                }
             }
             else{
                 if (DEBUG) printf("Player disconnected\nThe other player won.\n");
@@ -166,10 +172,15 @@ void *run_game(void *args){
 
         if(status != TIMEOUT){
             //Send move
-            printf("Sent move %s of size %ld to fd %d\n",input_buffer, send(current_player->socket_fd, input_buffer, strlen(input_buffer), 0), current_player->socket_fd);
+            printf("Sending move to other player\n");
+            if(sendline(current_player->socket_fd, input_buffer, strlen(input_buffer), 0) == -1){
+                printf("Errno: %d\n", errno);
+                perror("send");
+            }
+            else{
+                if (DEBUG) printf("Sent move to other player\n");
+            }
             
-            if (DEBUG) printf("Sent move to other player\n");
-
             //Sets new game status and sends it to each player
             if(!has_valid_moves(board, current_player->player_color)){
                 if(is_in_check(board, current_player->player_color)){
@@ -185,7 +196,10 @@ void *run_game(void *args){
             if(DEBUG) printf("Calculated new status\n");
 
             for(int i=0; i<current_game->match_data->connected_players; i++){
-                while (send(current_player->socket_fd, &status, sizeof(game_status), 0) == -1) if(DEBUG) printf("Error sending status: retrying");
+                if(sendint(current_player->socket_fd, status, 0) == -1){
+                    printf("Errno: %d\n", errno);
+                    perror("send");
+                }
                 current_player = current_player->next_player;
             }
 
@@ -194,8 +208,14 @@ void *run_game(void *args){
         else{
             //TIMEOUT. Send no move and new status only to other player
             char no_move[] = "a1-a1";
-            printf("%ld", send(current_player->socket_fd, no_move, strlen(no_move), 0));
-            send(current_player->socket_fd, &status, sizeof(game_status), 0);
+            if(sendline(current_player->socket_fd, no_move, strlen(no_move), 0)== -1){
+                printf("Errno: %d\n", errno);
+                perror("send");
+            }
+            if(sendint(current_player->socket_fd, status, 0) == -1){
+                printf("Errno: %d\n", errno);
+                perror("send");
+            }
         }
     }
         

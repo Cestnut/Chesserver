@@ -51,7 +51,7 @@ void *client_worker(void *args){
     error error_code = NO_ERROR;
 
     do{
-        bytes_read = recvline(client_fd, &choice, sizeof(client_choice), 0);
+        bytes_read = recvint(client_fd, (int*)&choice, 0);
         if(bytes_read){
             switch(choice){
                 case CREATE_GAME:
@@ -96,7 +96,10 @@ error create_game(int client_fd, char *game_name){
     if (DEBUG) printf("Tried inserting game: %s\n", game_name);
 
     if(error_code != NO_ERROR){
-        send(client_fd, &error_code, sizeof(error), 0);
+        if(sendint(client_fd, error_code, 0) == -1){
+            printf("Errno: %d\n", errno);
+            perror("send");
+        }
         return error_code;
     }
     else{
@@ -114,7 +117,10 @@ error join_game(int client_fd, char *game_name){
             printf("Game %s does not exist\n", game_name);
         }        
         error_code = GAME_DOESNT_EXIST;
-        send(client_fd, &error_code, sizeof(error), 0);
+        if(sendint(client_fd, error_code, 0) == -1){
+            printf("Errno: %d\n", errno);
+            perror("send");
+        }
     }
     else{
         pthread_rwlock_wrlock(&game->rwlock);
@@ -141,13 +147,19 @@ error join_game(int client_fd, char *game_name){
             //Increments counter of connected players, and signals game that a new player has joined
             game->match_data->connected_players++;
             error_code = NO_ERROR;
-            send(client_fd, &error_code, sizeof(error), 0);
+            if(sendint(client_fd, error_code, 0) == -1){
+                printf("Errno: %d\n", errno);
+                perror("send");
+            }
             pthread_cond_signal(&game->new_player_cond);    
         }//If the game is full and the player is not playing
         else{
 
             error_code = GAME_FULL;
-            send(client_fd, &error_code, sizeof(error), 0);
+            if(sendint(client_fd, error_code, 0) == -1){
+                printf("Errno: %d\n", errno);
+                perror("send");
+            }
             if(DEBUG) printf("Game is full, player cannot join\n");
         }
 
