@@ -65,7 +65,7 @@ int main(int argc, char **argv){
         fgets(input, sizeof(input), stdin);
         //flush_stdin();
         choice = (client_choice)atoi(input);
-        send(client_fd, &choice, 1, 0);
+        sendint(client_fd, choice, 0);
         switch(choice){
             case CREATE_GAME:
                 error_code = create_game(client_fd);
@@ -123,9 +123,9 @@ error create_game(int client_fd){
     puts("Insert game name: ");
     fgets(input_buffer, sizeof(input_buffer), stdin);
     //flush_stdin();
-    send(client_fd, input_buffer, strlen(input_buffer), 0);
+    sendline(client_fd, input_buffer, strlen(input_buffer), 0);
 
-    recvline(client_fd, &error_code, sizeof(error_code), 0);
+    recvint(client_fd, (int*)&error_code, 0);
     return error_code;
 }
 
@@ -135,9 +135,9 @@ error join_game(int client_fd){
     puts("Insert game name: ");
     fgets(input_buffer, sizeof(input_buffer), stdin);
     //flush_stdin();
-    send(client_fd, input_buffer, strlen(input_buffer), 0);
+    sendline(client_fd, input_buffer, strlen(input_buffer), 0);
 
-    recvline(client_fd, &error_code, sizeof(error_code), 0);
+    recvint(client_fd, (int*)&error_code, 0);
     return error_code;
 }
 
@@ -152,7 +152,7 @@ void game_menu(int client_fd){
     int error;
 
     printf("Waiting for game to begin\n");
-    if(recvline(client_fd, &player_color, sizeof(player_color), 0) == 0){
+    if(recvint(client_fd, (int*)&player_color, 0) == 0){
         printf("Server closed the connection\nExiting...");
         exit(0);
     }
@@ -191,13 +191,13 @@ void game_menu(int client_fd){
                     error = 1;
                     if (DEBUG) printf("Invalid move\n");
                 }
-                else if(send(client_fd, input_buffer, strlen(input_buffer), 0) == -1){
+                else if(sendline(client_fd, input_buffer, strlen(input_buffer), 0) == -1){
                     if(DEBUG) printf("Error sending move. Errno: %d", errno);
                     error = 1;
                 }
                 else{
                     if (DEBUG) printf("Move sent: %s of length %ld\n", input_buffer, strlen(input_buffer));
-                    if(recvline(client_fd, &server_response_move, sizeof(move_validation_result), 0)== 0){
+                    if(recvint(client_fd, (int*)&server_response_move, 0)== 0){
                         printf("Server closed the connection\nExiting...");
                         exit(0);
                     }
@@ -229,7 +229,7 @@ void game_menu(int client_fd){
         else if(curr_color == BLACK) curr_color = WHITE;
         
         if(DEBUG) printf("Waiting for new status\n");
-        if(recvline(client_fd, &status, sizeof(game_status), 0)== 0){
+        if(recvint(client_fd, (int*)&status, 0)== 0){
             printf("Server closed the connection\nExiting...\n");
             exit(0);
         }
