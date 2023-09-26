@@ -1,5 +1,7 @@
 #include "common.h"
 #include <errno.h>
+#include <stdint.h>
+#include <arpa/inet.h>
 
 void flush_stdin(){
     int c;
@@ -25,11 +27,55 @@ void strip_newlines(char *buffer, size_t len){
     }
 }
 
-ssize_t recvline(int sockfd, void *buf, size_t len, int flags){
-    ssize_t bytes_read = recv(sockfd, buf, len, flags);
-    if(bytes_read == -1){
-        printf("Error receiving message: errno %d\n", errno);
+ssize_t sendline(int client_fd, char *buffer, size_t buffer_len, int flags){
+    char newline[]="\n";
+    ssize_t sent_bytes=0;
+    strip_newlines(buffer, buffer_len);
+    sent_bytes+=send(client_fd, buffer, buffer_len, flags);
+    if(sent_bytes == -1) return sent_bytes;
+    else if(send(client_fd, newline, strlen(newline), flags) == -1) return -1;
+    else return sent_bytes + 1;
+}
+
+ssize_t recvline(int client_fd, char *buffer, size_t buffer_len, int flags){
+    printf("Receiving line\n");
+    ssize_t received_bytes=0, tmp_received_bytes;
+    while(received_bytes < buffer_len){
+        tmp_received_bytes = recv(client_fd, buffer+received_bytes, 1, flags);
+        //Calling function has to handle errors
+        if(tmp_received_bytes < 1) return tmp_received_bytes;
+        else{
+            if(buffer[received_bytes] == '\n'){
+                buffer[received_bytes] = '\0';
+                received_bytes += tmp_received_bytes;
+                break;
+            }
+            else{
+                received_bytes += tmp_received_bytes;
+            }
+        }
+        printf("Bytes read in total: %ld\nTotal data received: %s\n", received_bytes, buffer);
     }
-    strip_newlines(buf, len);
-    return bytes_read;
+    return received_bytes;
+}
+
+ssize_t sendint(int client_fd, int value, int flags){
+    int32_t converted_value = htonl(value);
+    ssize_t sent_bytes=0;
+    sent_bytes+=send(client_fd, &converted_value, sizeof(converted_value), flags);
+    return sent_bytes;
+}
+
+ssize_t recvint(int client_fd, int *result, int flags){
+
+    ssize_t received_bytes=0, tmp_received_bytes, bytes_to_receive=sizeof(int32_t);
+    char tmp_buffer[sizeof(int32_t)];
+    while(received_bytes < bytes_to_receive){
+        tmp_received_bytes = recv(client_fd, tmp_buffer+received_bytes, sizeof(tmp_buffer)-received_bytes, flags);
+        //Calling function has to handle errors
+        if(tmp_received_bytes<1) return tmp_received_bytes;
+        received_bytes+=tmp_received_bytes;
+    }
+    *result = ntohl(*(int32_t*)tmp_buffer);
+    return received_bytes;
 }

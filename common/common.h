@@ -24,5 +24,9 @@ typedef enum{
 
 void flush_stdin();
 int is_number(char *string);
-ssize_t recvline(int sockfd, void *buf, size_t len, int flags);
+ssize_t sendline(int client_fd, char *buffer, size_t buffer_len, int flags);
+ssize_t recvline(int sockfd, char *buf, size_t len, int flags);
 void strip_newlines(char *buffer, size_t len);
+
+ssize_t sendint(int client_fd, int value, int flags);
+ssize_t recvint(int client_fd, int *result, int flags);
