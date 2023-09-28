@@ -24,9 +24,13 @@ typedef enum{
 
 void flush_stdin();
 int is_number(char *string);
-ssize_t sendline(int client_fd, char *buffer, size_t buffer_len, int flags);
-ssize_t recvline(int sockfd, char *buf, size_t len, int flags);
 void strip_newlines(char *buffer, size_t len);
 
+//Sends buffer and a newline to socket
+ssize_t sendline(int client_fd, char *buffer, size_t buffer_len, int flags);
+//Receives from socket one byte at a time until newline character is met
+ssize_t recvline(int sockfd, char *buf, size_t len, int flags);
+//Sends integer value to socket
 ssize_t sendint(int client_fd, int value, int flags);
+//Receives an integer (4 bytes) from socket
 ssize_t recvint(int client_fd, int *result, int flags);
