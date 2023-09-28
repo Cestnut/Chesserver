@@ -1,6 +1,7 @@
 #include "game_handling.h"
 #include "server_connection.h"
 
+#define TEST FALSE
 
 games_struct *games;
 
@@ -18,7 +19,10 @@ error insert_game(char *name){
         error_code = GAME_NAME_TAKEN;
     }
     else{
+        if(TEST) printf("Cercando di acquisire il lock in scrittura\n");
         pthread_rwlock_wrlock(&games->rwlock);
+        if(TEST) printf("Acquisito il lock in scrittura\n");
+        if(TEST) sleep(15);
         game* game_entry = malloc(sizeof(game));
         strcpy(game_entry->name, name);
         game_entry->log_file = create_game_log(name);
@@ -39,16 +43,20 @@ error insert_game(char *name){
         HASH_ADD_STR(games->hashmap, name, game_entry);
         error_code = NO_ERROR;
         pthread_rwlock_unlock(&games->rwlock);
+        if(TEST) printf("Rilasciato il lock in scrittura\n");
     }
     return error_code;
 }
 
 game *get_game(char *name){
     game* game_entry;
-
+    if(TEST) printf("Cercando di acquisire il lock in lettura\n");
     pthread_rwlock_rdlock(&games->rwlock);
+    if(TEST) printf("Acquisito il lock in lettura\n");
+    if(TEST) sleep(15);
     HASH_FIND_STR(games->hashmap, name, game_entry);
     pthread_rwlock_unlock(&games->rwlock);
+    if(TEST) printf("Rilasciato il lock in lettura\n");
 
     return game_entry;
 }
@@ -57,8 +65,8 @@ void delete_game(char *name){
     game* game_entry = get_game(name);
     if(game_entry){
         pthread_rwlock_wrlock(&games->rwlock);
-        clean_game(game_entry);
         HASH_DEL(games->hashmap, game_entry);
+        clean_game(game_entry);
         pthread_rwlock_unlock(&games->rwlock);
     }
 }
@@ -79,6 +87,12 @@ void clean_game(game *game){
     free(data);
 
     if(game->log_file != NULL) fclose(game->log_file);
+    
+    //Destroys all the synchronization primitives
+    pthread_rwlock_destroy(&game->rwlock);
+    pthread_cond_destroy(&game->new_player_cond);
+    pthread_mutex_destroy(&game->new_player_mutex);
+
     free(game);
 }
 
@@ -122,7 +136,7 @@ void *run_game(void *args){
     }
 
     char input_buffer[BUFFER_LEN];
-    Position *positions = malloc(sizeof(Position)*2);
+    Position *positions;
     int error;
     move_validation_result server_response_move;
     game_status status = RUNNING;
@@ -141,7 +155,8 @@ void *run_game(void *args){
 
                 if(DEBUG) printf("Received move: %s\n", input_buffer);
                 //Validate and make move
-                if(parse_move(positions, input_buffer) == NULL){
+                positions = parse_move(input_buffer);
+                if(positions == NULL){
                     if (DEBUG) printf("Invalid input\n");
                     server_response_move = INVALID_MOVE;
                 }

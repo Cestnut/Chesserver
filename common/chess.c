@@ -481,7 +481,8 @@ int parse_row(char letter){
     return parse("12345678", 8, letter);
 }
 
-Position *parse_move(Position *points, char *move_string){
+Position *parse_move(char *move_string){
+    Position *positions = malloc(sizeof(Position)*2);
     int parsed_letter;
     //This is done to avoid that the original string gets modified
     char buffer_copy[BUFFER_LEN];
@@ -490,30 +491,48 @@ Position *parse_move(Position *points, char *move_string){
 
     //PARSE FIRST POINT
     token = strtok(buffer_copy, "-");
-    if(token==NULL) return NULL;
+    if(token==NULL){
+        free(positions);
+        return NULL;
+    } 
 
     parsed_letter = parse_column(token[0]);
-    if(parsed_letter == -1) return NULL;
-    points[0].col = parsed_letter;
+    if(parsed_letter == -1){
+        free(positions);
+        return NULL;
+    }
+    positions[0].col = parsed_letter;
     
     parsed_letter = parse_row(token[1]);
-    if(parsed_letter == -1) return NULL;
-    points[0].row = parsed_letter;
+    if(parsed_letter == -1){
+        free(positions);
+        return NULL;
+    }
+    positions[0].row = parsed_letter;
     
     //PARSE SECOND POINT
     token = strtok(NULL, "");
-    if(token==NULL) return NULL;
+    if(token==NULL){
+        free(positions);
+        return NULL;
+    }
 
     parsed_letter = parse_column(token[0]);
-    if(parsed_letter == -1) return NULL;
-    points[1].col = parsed_letter;
+    if(parsed_letter == -1){
+        free(positions);
+        return NULL;
+    }
+    positions[1].col = parsed_letter;
     
     parsed_letter = parse_row(token[1]);
-    if(parsed_letter == -1) return NULL;
-    points[1].row = parsed_letter;
+    if(parsed_letter == -1){
+        free(positions);
+        return NULL;
+    }
+    positions[1].row = parsed_letter;
 
 
-    return points;
+    return positions;
 }
 
 void clean_board(board_struct *board){

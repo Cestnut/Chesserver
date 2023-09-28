@@ -2,7 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "../common/chess.h"
-#define DEBUG TRUE
+#define DEBUG FALSE
 
 error create_game(int client_fd);
 error join_game(int client_fd);
@@ -18,7 +18,7 @@ int main(int argc, char **argv){
     char *token;
     do{
         error_flag = 0;
-        puts("Benvenuto a Chesserver! Scrivi l'indirizzo del server nella forma <HOSTNAME>:<PORTA>\n");
+        puts("Welcome to ELO! A Chess Service for Fun and Profit. Input the server's hostname and port in the following format <HOSTNAME>:<PORT_NUMBER>\n");
         fgets(server_addr, sizeof(server_addr), stdin);
         token = strtok(server_addr, ":");
         hostname = token;
@@ -144,7 +144,7 @@ error join_game(int client_fd){
 void game_menu(int client_fd){
     char input_buffer[BUFFER_LEN];
     char player_color_str[10];
-    Position *positions = malloc(sizeof(Position)*2);
+    Position *positions;
     piece_color player_color, curr_color=WHITE;
     game_status status = RUNNING;
     board_struct *board;
@@ -183,7 +183,8 @@ void game_menu(int client_fd){
                 //flush_stdin();
                 //Sends the move and waits for feedback
                 strip_newlines(input_buffer, strlen(input_buffer));
-                if(parse_move(positions, input_buffer) == NULL){
+                positions = parse_move(input_buffer);
+                if(positions == NULL){
                     error = 1;
                     if (DEBUG) printf("Invalid pattern\n");
                 }
@@ -204,7 +205,7 @@ void game_menu(int client_fd){
 
                     if(server_response_move == INVALID_MOVE) printf("Invalid move\n");
                     else{
-                        parse_move(positions, input_buffer);
+                        positions = parse_move(input_buffer);
                         if (DEBUG) printf("%d%d to %d%d\n", positions[0].col, positions[0].row, positions[1].col, positions[1].row);
                         move_piece(board, positions[0], positions[1]);
                         error = 0;
@@ -219,7 +220,7 @@ void game_menu(int client_fd){
                 exit(0);
             }
             if (DEBUG) printf("Received move %s\n", input_buffer);
-            parse_move(positions, input_buffer);
+            positions = parse_move(input_buffer);
             move_piece(board, positions[0], positions[1]);
         }
         
