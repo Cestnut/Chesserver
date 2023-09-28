@@ -38,7 +38,6 @@ ssize_t sendline(int client_fd, char *buffer, size_t buffer_len, int flags){
 }
 
 ssize_t recvline(int client_fd, char *buffer, size_t buffer_len, int flags){
-    printf("Receiving line\n");
     ssize_t received_bytes=0, tmp_received_bytes;
     while(received_bytes < buffer_len){
         tmp_received_bytes = recv(client_fd, buffer+received_bytes, 1, flags);
@@ -54,7 +53,6 @@ ssize_t recvline(int client_fd, char *buffer, size_t buffer_len, int flags){
                 received_bytes += tmp_received_bytes;
             }
         }
-        printf("Bytes read in total: %ld\nTotal data received: %s\n", received_bytes, buffer);
     }
     return received_bytes;
 }

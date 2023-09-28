@@ -6,7 +6,7 @@
 int main(int argc, char **argv){
 
     int server_fd, client_fd;
-    int port = 5555;
+    int port = PORT;
 
     struct sockaddr_in client_addr;
     socklen_t client_addr_len;

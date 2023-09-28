@@ -1,4 +1,3 @@
 #define PORT 5555
 #define BUFFER_LEN 1024
-#define TOKEN_LENGTH 64
 #define GAME_NAME_MAX_LENGTH 32

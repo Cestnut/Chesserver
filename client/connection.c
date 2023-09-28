@@ -4,11 +4,6 @@
 int connect_to_server(char* hostname, int port){
     int socket_fd;
     struct sockaddr_in server_addr;
-    char input_buffer[BUFFER_LEN], output_buffer[BUFFER_LEN];
-    
-    memset(input_buffer, 0, BUFFER_LEN);
-    memset(output_buffer, 0, BUFFER_LEN);
-
 
     socket_fd = socket(AF_INET, SOCK_STREAM, 0);
     if(socket_fd == -1){
